@@ -1,0 +1,22 @@
+{
+  "properties": [
+    {
+      "name": "app.time-zone",
+      "type": "java.lang.String",
+      "description": "统计日期/小时使用的时区，需与 new-api 库 created_at 时间口径一致。",
+      "defaultValue": "Asia/Shanghai"
+    },
+    {
+      "name": "app.analytics-roles",
+      "type": "java.lang.String",
+      "description": "允许访问统计 API 的 new-api 角色 ID，逗号分隔，默认管理员/根用户。",
+      "defaultValue": "10,100"
+    },
+    {
+      "name": "app.cors.allowed-origins",
+      "type": "java.lang.String",
+      "description": "允许的跨域来源，逗号分隔。",
+      "defaultValue": "http://localhost:3001,http://localhost:5173"
+    }
+  ]
+}

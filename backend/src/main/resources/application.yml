@@ -1,0 +1,65 @@
+spring:
+  application:
+    name: newapi-analyzer
+  # 本地开发可复制 backend/.env.example 为 backend/.env（已被 .gitignore 忽略），
+  # 并在 backend 目录内启动应用；文件不存在时该配置自动跳过。
+  config:
+    import: optional:file:.env[.properties]
+  datasource:
+    # 支持 PostgreSQL 与 MySQL：DB_URL 使用对应的 JDBC 地址即可，
+    # 驱动与 Hibernate 方言会按 URL 自动探测（无需手工指定）。
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/new-api}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    hikari:
+      # 建立连接后执行的初始化 SQL，用于统一统计时区口径。
+      # PostgreSQL: SET TIME ZONE 'Asia/Shanghai'
+      # MySQL:      SET time_zone = '+08:00'（与 APP_TIME_ZONE 对应的固定偏移）
+      'connection-init-sql': "${DB_CONNECTION_INIT_SQL:SET TIME ZONE '${APP_TIME_ZONE:Asia/Shanghai}'}"
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+    show-sql: false
+    properties:
+      hibernate:
+        # SQL 调试如需格式化，可在此追加 format_sql: true（默认 false）
+
+server:
+  port: ${SERVER_PORT:8082}
+  servlet:
+    context-path: ${SERVER_CONTEXT_PATH:/newapi-stat-api}
+    session:
+      timeout: ${SESSION_TIMEOUT:30m}
+      cookie:
+        http-only: true
+        same-site: ${SESSION_COOKIE_SAME_SITE:lax}
+        secure: ${SESSION_COOKIE_SECURE:false}
+
+app:
+  time-zone: ${APP_TIME_ZONE:Asia/Shanghai}
+  analytics-roles: ${APP_ANALYTICS_ROLES:10,100}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3001,http://localhost:5173}
+
+springdoc:
+  api-docs:
+    enabled: ${SWAGGER_ENABLED:false}
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: ${SWAGGER_ENABLED:false}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+
+logging:
+  level:
+    root: ${LOG_LEVEL_ROOT:INFO}
+    '[com.newapi.analyzer]': ${LOG_LEVEL_APP:INFO}

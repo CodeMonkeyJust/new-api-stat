@@ -1,0 +1,268 @@
+<template>
+  <div class="date-user-selector">
+    <div class="date-mode-selector">
+      <el-radio-group v-model="dateMode" size="small" @change="handleDateModeChange">
+        <el-radio-button value="single">单日</el-radio-button>
+        <el-radio-button value="range">日期范围</el-radio-button>
+      </el-radio-group>
+    </div>
+    <div class="date-selector" v-if="dateMode === 'single'">
+      <el-button @click="prevDay" :disabled="loading" size="small">前一天</el-button>
+      <el-date-picker
+        v-model="selectedDate"
+        type="date"
+        placeholder="选择日期"
+        style="width: 200px; margin: 0 10px"
+        value-format="YYYY-MM-DD"
+        size="small"
+        :disabled-date="disableFutureDate"
+        @change="handleDateChange"
+      />
+      <el-button @click="nextDay" :disabled="loading" size="small">后一天</el-button>
+    </div>
+    <div class="date-range-selector" v-if="dateMode === 'range'">
+      <el-date-picker
+        v-model="dateRange"
+        type="daterange"
+        range-separator="至"
+        start-placeholder="开始日期"
+        end-placeholder="结束日期"
+        style="width: 280px; margin: 0 10px"
+        value-format="YYYY-MM-DD"
+        size="small"
+        :disabled-date="disableFutureDate"
+        @change="handleDateRangeChange"
+      />
+      <el-button-group>
+        <el-button @click="selectRecentDays(7)" :disabled="loading" size="small">最近7天</el-button>
+        <el-button @click="selectRecentDays(30)" :disabled="loading" size="small">最近30天</el-button>
+      </el-button-group>
+    </div>
+    <div class="user-selector" v-if="showUserSelector">
+      <el-select v-model="userMode" placeholder="选择人员" size="small" style="width: 150px" @change="handleUserModeChange">
+        <el-option label="全部人员" value="all" />
+        <el-option label="指定人员" value="specific" />
+      </el-select>
+      <el-select
+        v-if="userMode === 'specific'"
+        v-model="selectedUsers"
+        :loading="loadingUsers"
+        :disabled="loadingUsers"
+        placeholder="选择人员"
+        size="small"
+        style="width: 400px; margin-left: 10px"
+        multiple
+        filterable
+        collapse-tags
+        :max-collapse-tags="2"
+        collapse-tags-tooltip
+        clearable
+        @clear="handleUserClear"
+        popper-class="user-select-dropdown"
+      >
+        <el-option
+          v-for="user in userList"
+          :key="user.id"
+          :label="user.displayName || user.username"
+          :value="user.username"
+        >
+          <span style="float: left">{{ user.displayName || user.username }}</span>
+          <span style="float: right; color: #8492a6; font-size: 13px">{{ user.username }}</span>
+        </el-option>
+      </el-select>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, watch, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import { getUsers } from '@/api/analyzer'
+import type { UserItem } from '@/api/analyzer'
+
+interface Props {
+  showUserSelector?: boolean
+  loading?: boolean
+  defaultDateMode?: 'single' | 'range'
+}
+
+interface Emits {
+  (e: 'date-change', date: string): void
+  (e: 'date-range-change', startDate: string, endDate: string): void
+  (e: 'user-mode-change', mode: string): void
+  (e: 'user-change', users: string[]): void
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  loading: false,
+  defaultDateMode: 'range',
+  showUserSelector: true
+})
+
+const emit = defineEmits<Emits>()
+
+const dateMode = ref<'single' | 'range'>(props.defaultDateMode)
+const selectedDate = ref('')
+const dateRange = ref<[string, string] | null>(null)
+const userMode = ref('all')
+const selectedUsers = ref<string[]>([])
+const userList = ref<UserItem[]>([])
+const loadingUsers = ref(false)
+
+const setToday = () => {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  selectedDate.value = `${year}-${month}-${day}`
+  emit('date-change', selectedDate.value)
+}
+
+const prevDay = () => {
+  const date = new Date(selectedDate.value)
+  date.setDate(date.getDate() - 1)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  selectedDate.value = `${year}-${month}-${day}`
+  emit('date-change', selectedDate.value)
+}
+
+const nextDay = () => {
+  const date = new Date(selectedDate.value)
+  date.setDate(date.getDate() + 1)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  selectedDate.value = `${year}-${month}-${day}`
+  emit('date-change', selectedDate.value)
+}
+
+const disableFutureDate = (date: Date) => date.getTime() > Date.now()
+
+const handleDateModeChange = () => {
+  if (dateMode.value === 'single') {
+    setToday()
+  } else {
+    selectRecentDays(7)
+  }
+}
+
+const handleDateChange = () => {
+  emit('date-change', selectedDate.value)
+}
+
+const handleDateRangeChange = () => {
+  if (dateRange.value && dateRange.value.length === 2) {
+    emit('date-range-change', dateRange.value[0], dateRange.value[1])
+  }
+}
+
+const selectRecentDays = (days: number) => {
+  const endDate = new Date()
+  const startDate = new Date()
+  startDate.setDate(startDate.getDate() - days + 1)
+
+  const formatDate = (date: Date) => {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+
+  dateRange.value = [formatDate(startDate), formatDate(endDate)]
+  emit('date-range-change', dateRange.value[0], dateRange.value[1])
+}
+
+const handleUserModeChange = () => {
+  emit('user-mode-change', userMode.value)
+  if (userMode.value === 'specific' && userList.value.length === 0) {
+    loadUsers()
+  }
+}
+
+const handleUserClear = () => {
+  selectedUsers.value = []
+  emit('user-change', [])
+}
+
+watch(selectedUsers, (newValue: string[]) => {
+  emit('user-change', newValue)
+})
+
+const loadUsers = async () => {
+  loadingUsers.value = true
+  try {
+    const response = await getUsers()
+    userList.value = response.data
+  } catch (error) {
+    ElMessage.error('加载用户列表失败')
+  } finally {
+    loadingUsers.value = false
+  }
+}
+
+onMounted(() => {
+  if (props.defaultDateMode === 'single') {
+    setToday()
+  } else {
+    selectRecentDays(7)
+  }
+})
+
+defineExpose({
+  setToday
+})
+</script>
+
+<style scoped>
+.date-user-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.date-mode-selector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 0;
+}
+
+.date-selector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 0;
+}
+
+.date-range-selector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 0;
+}
+
+.user-selector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 0;
+}
+</style>
+
+<style>
+.user-select-dropdown {
+  max-width: 600px;
+}
+
+.user-select-dropdown .el-select-dropdown__item {
+  height: auto;
+  padding: 8px 20px;
+  line-height: 1.5;
+}
+
+.user-select-dropdown .el-select-dropdown__item:hover {
+  background-color: #f5f7fa;
+}
+</style>
