@@ -7,21 +7,22 @@
             <svg class="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            <h1 class="app-title">模型应用统计</h1>
+            <h1 class="app-title">{{ t('brand.appTitle') }}</h1>
           </div>
           <div class="header-meta">
-            <span class="status-badge">统计分析</span>
+            <span class="status-badge">{{ t('brand.badge') }}</span>
+            <LanguageSwitcher class="header-language" />
             <el-dropdown @command="handleCommand">
               <span class="user-info">
                 <el-icon class="user-icon"><User /></el-icon>
-                <span class="username">{{ currentUser?.displayName || currentUser?.username || '用户' }}</span>
+                <span class="username">{{ currentUser?.displayName || currentUser?.username || t('header.userFallback') }}</span>
                 <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
               </span>
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item command="logout">
                     <el-icon><SwitchButton /></el-icon>
-                    <span>退出登录</span>
+                    <span>{{ t('menu.logout') }}</span>
                   </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
@@ -38,32 +39,32 @@
           >
             <el-menu-item index="/my-statistics" class="menu-item">
               <el-icon class="menu-icon"><DataAnalysis /></el-icon>
-              <span class="menu-text">个人统计</span>
+              <span class="menu-text">{{ t('menu.myStatistics') }}</span>
             </el-menu-item>
             <template v-if="isPrivileged">
             <el-menu-item index="/dashboard" class="menu-item">
               <el-icon class="menu-icon"><Odometer /></el-icon>
-              <span class="menu-text">仪表盘</span>
+              <span class="menu-text">{{ t('menu.dashboard') }}</span>
             </el-menu-item>
             <el-menu-item index="/daily-trend" class="menu-item">
               <el-icon class="menu-icon"><TrendCharts /></el-icon>
-              <span class="menu-text">每日趋势</span>
+              <span class="menu-text">{{ t('menu.dailyTrend') }}</span>
             </el-menu-item>
             <el-menu-item index="/model-daily" class="menu-item">
               <el-icon class="menu-icon"><Document /></el-icon>
-              <span class="menu-text">模型消耗统计</span>
+              <span class="menu-text">{{ t('menu.modelConsumption') }}</span>
             </el-menu-item>
             <el-menu-item index="/hourly" class="menu-item">
               <el-icon class="menu-icon"><Clock /></el-icon>
-              <span class="menu-text">时段统计</span>
+              <span class="menu-text">{{ t('menu.hourly') }}</span>
             </el-menu-item>
             <el-menu-item index="/user-daily" class="menu-item">
               <el-icon class="menu-icon"><User /></el-icon>
-              <span class="menu-text">人员统计</span>
+              <span class="menu-text">{{ t('menu.userDaily') }}</span>
             </el-menu-item>
             <el-menu-item index="/user-balance" class="menu-item">
               <el-icon class="menu-icon"><Wallet /></el-icon>
-              <span class="menu-text">用户余额</span>
+              <span class="menu-text">{{ t('menu.userBalance') }}</span>
             </el-menu-item>
             </template>
           </el-menu>
@@ -82,9 +83,12 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { DataAnalysis, Document, Clock, TrendCharts, User, Wallet, Odometer, ArrowDown, SwitchButton } from '@element-plus/icons-vue'
 import { getCurrentUser, logout } from '@/api/auth'
+import { useI18n } from 'vue-i18n'
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 import type { UserDTO } from '@/api/auth'
 import { isPrivilegedRole } from '@/utils/role'
 
+const { t } = useI18n({ useScope: 'global' })
 const route = useRoute()
 const router = useRouter()
 const activeMenu = ref(route.path)
@@ -111,16 +115,16 @@ watch(() => route.path, (newPath) => {
 const handleCommand = async (command: string) => {
   if (command === 'logout') {
     try {
-      await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+      await ElMessageBox.confirm(t('confirm.logoutMessage'), t('confirm.title'), {
+        confirmButtonText: t('confirm.confirm'),
+        cancelButtonText: t('confirm.cancel'),
         type: 'warning'
       })
 
       await logout()
       localStorage.removeItem('user')
       currentUser.value = null
-      ElMessage.success('已退出登录')
+      ElMessage.success(t('msg.logoutSuccess'))
       router.push('/login')
     } catch (error) {
       if (error !== 'cancel') {

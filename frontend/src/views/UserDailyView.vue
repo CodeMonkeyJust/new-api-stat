@@ -2,7 +2,7 @@
   <el-card class="user-daily-view">
     <template #header>
       <div class="card-header">
-        <span>人员统计</span>
+        <span>{{ t('userDaily.title') }}</span>
       </div>
     </template>
     <DateUserSelector
@@ -19,6 +19,19 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import type { QueryRequest } from '@/api/analyzer'
+import { ElMessage } from 'element-plus'
+import type * as echarts from 'echarts'
+import { useI18n } from 'vue-i18n'
+import { useAppLocale } from '@/composables/useAppLocale'
+import { initChart } from '@/utils/chart'
+import { getUserDaily } from '@/api/analyzer'
+import type { UserDailyItem } from '@/api/analyzer'
+import DateUserSelector from '@/components/DateUserSelector.vue'
+
+const { t } = useI18n({ useScope: 'global' })
+const { locale } = useAppLocale()
 
 const readLegendState = (key: string, fallback: Record<string, boolean> | string[] | null = null) => {
   try {
@@ -31,20 +44,14 @@ const readLegendState = (key: string, fallback: Record<string, boolean> | string
   }
 }
 
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
-import type { QueryRequest } from '@/api/analyzer'
-import { ElMessage } from 'element-plus'
-import * as echarts from 'echarts'
-import { getUserDaily } from '@/api/analyzer'
-import type { UserDailyItem } from '@/api/analyzer'
-import DateUserSelector from '@/components/DateUserSelector.vue'
-
 const loading = ref(false)
 const startDate = ref('')
 const endDate = ref('')
 const userMode = ref('all')
 const specificUser = ref('')
 const chartContainer = ref<HTMLElement>()
+const chartData = ref<UserDailyItem[]>([])
+const hasRendered = ref(false)
 let chartInstance: echarts.ECharts | null = null
 
 const handleDateChange = (date: string) => {
@@ -87,22 +94,32 @@ const loadData = async () => {
     }
 
     const response = await getUserDaily(params)
-    renderChart(response.data)
+    chartData.value = response.data
+    renderChart()
   } catch (error) {
-    ElMessage.error('加载数据失败')
+    console.error('Load data error:', error)
+    ElMessage.error(t('msg.loadFailed'))
   } finally {
     loading.value = false
   }
 }
 
-const renderChart = (data: UserDailyItem[]) => {
+const renderChart = () => {
   if (!chartContainer.value) return
 
-  if (!chartInstance) {
-    chartInstance = echarts.init(chartContainer.value)
+  if (chartInstance) {
+    chartInstance.dispose()
   }
+  chartInstance = initChart(chartContainer.value, locale.value)
+  hasRendered.value = true
+
+  const inputName = t('metric.inputToken')
+  const outputName = t('metric.outputToken')
+  const costName = t('metric.costUsd')
+  const valueAxisName = t('metric.valueAxis')
 
   // 按用户聚合数据
+  const data = chartData.value
   const userMap = new Map<string, { promptTokens: number, completionTokens: number, cost: number }>()
 
   data.forEach(item => {
@@ -125,8 +142,8 @@ const renderChart = (data: UserDailyItem[]) => {
   const completionTokenData = users.map(username => userMap.get(username)!.completionTokens)
   const costData = users.map(username => userMap.get(username)!.cost)
 
-  // 读取保存的图例状态
-  const selectedLegend = readLegendState('userDailyLegend', null)
+  // 读取当前语言保存的图例状态
+  const selectedLegend = readLegendState('userDailyLegend:' + locale.value, null)
 
   const option: echarts.EChartsOption = {
     tooltip: {
@@ -138,7 +155,7 @@ const renderChart = (data: UserDailyItem[]) => {
         if (!params || params.length === 0) return ''
         let result = params[0].name + '<br/>'
         params.forEach((param: any) => {
-          if (param.seriesName.includes('费用')) {
+          if (param.seriesName === costName) {
             result += `${param.marker} ${param.seriesName}: $${param.value.toFixed(4)}<br/>`
           } else {
             result += `${param.marker} ${param.seriesName}: ${formatNumber(param.value)}<br/>`
@@ -148,7 +165,7 @@ const renderChart = (data: UserDailyItem[]) => {
       }
     },
     legend: {
-      data: ['输入Token', '输出Token', '费用(美元)'],
+      data: [inputName, outputName, costName],
       selected: selectedLegend,
       top: 10
     },
@@ -169,14 +186,14 @@ const renderChart = (data: UserDailyItem[]) => {
     },
     yAxis: {
       type: 'value',
-      name: '数值',
+      name: valueAxisName,
       axisLabel: {
         formatter: (value: number) => formatNumber(value)
       }
     },
     series: [
       {
-        name: '输入Token',
+        name: inputName,
         type: 'bar',
         data: promptTokenData,
         label: {
@@ -187,7 +204,7 @@ const renderChart = (data: UserDailyItem[]) => {
         }
       },
       {
-        name: '输出Token',
+        name: outputName,
         type: 'bar',
         data: completionTokenData,
         label: {
@@ -198,7 +215,7 @@ const renderChart = (data: UserDailyItem[]) => {
         }
       },
       {
-        name: '费用(美元)',
+        name: costName,
         type: 'bar',
         data: costData,
         label: {
@@ -213,10 +230,10 @@ const renderChart = (data: UserDailyItem[]) => {
 
   chartInstance.setOption(option, { notMerge: true })
 
-  // 监听图例选择变化并保存
+  // 监听图例选择变化并保存（按语言分别保存）
   chartInstance.off('legendselectchanged')
   chartInstance.on('legendselectchanged', (params: any) => {
-    localStorage.setItem('userDailyLegend', JSON.stringify(params.selected))
+    localStorage.setItem('userDailyLegend:' + locale.value, JSON.stringify(params.selected))
   })
 }
 
@@ -234,6 +251,12 @@ const handleResize = () => {
     chartInstance.resize()
   }
 }
+
+watch(locale, () => {
+  if (chartContainer.value && hasRendered.value) {
+    renderChart()
+  }
+})
 
 onMounted(() => {
   window.addEventListener('resize', handleResize)

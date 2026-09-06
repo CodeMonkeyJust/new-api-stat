@@ -1,16 +1,10 @@
-# new-api-stat
+# db 目录说明
 
-## 1. Description
+`db/MySQL.sql` 是从目标 new-api MySQL 实例导出的**数据库结构参考文件**，仅用于说明
+new-api 的库表结构；本项目主要读取其中的 `logs`、`users` 两张表做只读统计。
 
-`new-api-stat` supports both PostgreSQL and MySQL backends (selected via `DB_URL`). It only reads the `logs` and `users` tables and is strictly read-only with respect to the new-api database. This directory contains the table-structure reference SQL for both supported databases:
+> ⚠️ 该文件仅供阅读参考，**不是迁移脚本，请勿对任何数据库执行**；new-api 的库表结构
+> 由 new-api 自身创建和维护，不要用它覆盖已有库表。
 
-- `MySQL.sql` — generated from a target new-api MySQL 8 instance (`new_api`), covering the `logs` and `users` tables as created by new-api.
-- `PostgreSQL.sql` — mirrors the same `logs`/`users` layout in PostgreSQL syntax.
-
-The reference layout is documented against **new-api v1.0.0-rc.32** and may change in other releases.
-
-## 2. Notes
-
-- The scripts are reference schemas documenting the columns and indexes the application depends on. They are not migration scripts and must not be applied blindly to an existing new-api database; new-api manages its own schema.
-- The layout may vary between new-api releases. Review the version running on the target instance before use.
-- Prefer granting the application a read-only database role instead of using an administrator account.
+- 当前按 new-api **v1.0.0-rc.32** 的表结构整理，其他版本可能有差异，使用前请先核对目标 new-api 实例的版本。
+- 建议为应用创建只读数据库账号，而不是使用管理员账号。

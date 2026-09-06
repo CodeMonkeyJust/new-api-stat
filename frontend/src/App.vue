@@ -1,10 +1,20 @@
 <template>
-  <div id="app">
-    <router-view />
-  </div>
+  <el-config-provider :locale="epLocale">
+    <div id="app">
+      <router-view />
+    </div>
+  </el-config-provider>
 </template>
 
 <script setup lang="ts">
+import { onMounted } from 'vue'
+import { useAppLocale } from '@/composables/useAppLocale'
+
+const { epLocale, applyLocaleMeta } = useAppLocale()
+
+onMounted(() => {
+  applyLocaleMeta()
+})
 </script>
 
 <style>

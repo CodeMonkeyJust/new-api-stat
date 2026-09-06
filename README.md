@@ -3,6 +3,16 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![CI](https://github.com/CodeMonkeyJust/new-api-stat/actions/workflows/ci.yml/badge.svg)](https://github.com/CodeMonkeyJust/new-api-stat/actions/workflows/ci.yml)
 
+<p align="center">
+  <strong>简体中文</strong> |
+  <a href="./README.en.md">English</a> |
+  <a href="./README.fr.md">Français</a> |
+  <a href="./README.ru.md">Русский</a> |
+  <a href="./README.ja.md">日本語</a> |
+  <a href="./README.vi.md">Tiếng Việt</a> |
+  <a href="./README.zh-TW.md">繁體中文</a>
+</p>
+
 面向 [new-api](https://github.com/Calcium-Ion/new-api) 的 Token 消耗与调用统计分析工具，提供仪表盘、趋势、模型、时段、用户和余额等视图，后端提供 Excel 导出 API；当前前端页面暂未集成导出按钮。
 
 > 项目处于早期阶段，建议先在测试环境验证数据库兼容性和统计口径，再用于生产环境。
@@ -36,7 +46,7 @@ frontend/  Vue 前端
 
 本项目直接读取 new-api 的 `logs` 和 `users` 表做只读统计，数据库支持 PostgreSQL 与 MySQL，通过 `DB_URL` 切换（默认 PostgreSQL）。请先确认数据库账号具备只读查询权限，并在测试环境验证 SQL 和字段版本兼容性。
 
-`db/PostgreSQL.sql` 与 `db/MySQL.sql` 分别是 PostgreSQL 与 MySQL 的表结构参考文件，覆盖本项目读取的 `logs`、`users` 两张表（`MySQL.sql` 由目标 new-api MySQL 实例生成，`PostgreSQL.sql` 与之保持同步）。目前按 new-api **v1.0.0-rc.32** 的表结构验证。它们不是迁移脚本，请勿直接覆盖已有数据库。
+`db/MySQL.sql` 是目标 new-api MySQL 实例的库表结构参考文件，用于说明 new-api 的数据库结构（本项目主要读取其中的 `logs`、`users` 两张表）。目前按 new-api **v1.0.0-rc.32** 的表结构验证。该文件仅供阅读参考，不是迁移脚本，请勿对任何数据库执行或覆盖已有库表。
 
 ### 2. 启动后端
 

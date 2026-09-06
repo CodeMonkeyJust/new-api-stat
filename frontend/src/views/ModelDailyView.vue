@@ -2,7 +2,7 @@
   <el-card class="model-daily">
     <template #header>
       <div class="card-header">
-        <span>模型消耗统计</span>
+        <span>{{ t('model.title') }}</span>
       </div>
     </template>
     <DateUserSelector
@@ -17,7 +17,7 @@
     <div ref="chartContainer" class="chart-container" v-loading="loading"></div>
     <UserDetailsTable
       v-if="selectedModel !== null"
-      :title="`${selectedModel} 模型人员详情`"
+      :title="t('model.userDetailsTitle', { model: selectedModel })"
       :data="userDetails"
       :loading="userDetailsLoading"
     />
@@ -25,6 +25,20 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import type { QueryRequest } from '@/api/analyzer'
+import { ElMessage } from 'element-plus'
+import type * as echarts from 'echarts'
+import { useI18n } from 'vue-i18n'
+import { useAppLocale } from '@/composables/useAppLocale'
+import { initChart } from '@/utils/chart'
+import { getModelDaily, getModelUsers } from '@/api/analyzer'
+import type { ModelDailyItem, ModelUserItem } from '@/api/analyzer'
+import UserDetailsTable from '@/components/UserDetailsTable.vue'
+import DateUserSelector from '@/components/DateUserSelector.vue'
+
+const { t } = useI18n({ useScope: 'global' })
+const { locale } = useAppLocale()
 
 const readLegendState = (key: string, fallback: Record<string, boolean> | string[] | null = null) => {
   try {
@@ -37,15 +51,6 @@ const readLegendState = (key: string, fallback: Record<string, boolean> | string
   }
 }
 
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
-import type { QueryRequest } from '@/api/analyzer'
-import { ElMessage } from 'element-plus'
-import * as echarts from 'echarts'
-import { getModelDaily, getModelUsers } from '@/api/analyzer'
-import type { ModelDailyItem, ModelUserItem } from '@/api/analyzer'
-import UserDetailsTable from '@/components/UserDetailsTable.vue'
-import DateUserSelector from '@/components/DateUserSelector.vue'
-
 const loading = ref(false)
 const userDetailsLoading = ref(false)
 const selectedDate = ref('')
@@ -56,6 +61,8 @@ const specificUser = ref('')
 const selectedModel = ref<string | null>(null)
 const userDetails = ref<ModelUserItem[]>([])
 const chartContainer = ref<HTMLElement>()
+const chartData = ref<ModelDailyItem[]>([])
+const hasRendered = ref(false)
 let chartInstance: echarts.ECharts | null = null
 
 const handleDateChange = (date: string) => {
@@ -108,8 +115,8 @@ const loadUserDetails = async (model: string) => {
     const response = await getModelUsers(params, model)
     userDetails.value = response.data
   } catch (error) {
-    console.error('加载人员详情失败:', error)
-    ElMessage.error('加载人员详情失败')
+    console.error('Load user details error:', error)
+    ElMessage.error(t('msg.loadUserDetailsFailed'))
   } finally {
     userDetailsLoading.value = false
   }
@@ -133,29 +140,37 @@ const loadData = async () => {
     }
 
     const response = await getModelDaily(params)
-    renderChart(response.data)
+    chartData.value = response.data
+    renderChart()
   } catch (error) {
-    ElMessage.error('加载数据失败')
+    console.error('Load data error:', error)
+    ElMessage.error(t('msg.loadFailed'))
   } finally {
     loading.value = false
   }
 }
 
-const renderChart = (data: ModelDailyItem[]) => {
+const renderChart = () => {
   if (!chartContainer.value) return
 
   if (chartInstance) {
     chartInstance.dispose()
   }
+  chartInstance = initChart(chartContainer.value, locale.value)
+  hasRendered.value = true
 
-  chartInstance = echarts.init(chartContainer.value)
+  const inputName = t('metric.inputToken')
+  const outputName = t('metric.outputToken')
+  const costName = t('metric.costUsd')
+  const tokenAxisName = t('metric.tokenAxis')
 
+  const data = chartData.value
   const models = data.map(item => item.model)
   const promptTokenData = data.map(item => item.promptTokens)
   const completionTokenData = data.map(item => item.completionTokens)
   const costData = data.map(item => item.cost)
 
-  const selectedLegend = readLegendState('modelDailyLegend', ['输入Token', '输出Token', '费用(美元)'])
+  const selectedLegend = readLegendState('modelDailyLegend:' + locale.value, null)
 
   const option = {
     tooltip: {
@@ -167,7 +182,7 @@ const renderChart = (data: ModelDailyItem[]) => {
         if (!params || params.length === 0) return ''
         let result = params[0].name + '<br/>'
         params.forEach((param: any) => {
-          if (param.seriesName === '费用(美元)') {
+          if (param.seriesName === costName) {
             result += `${param.marker} ${param.seriesName}: $${param.value.toFixed(2)}<br/>`
           } else {
             result += `${param.marker} ${param.seriesName}: ${formatNumber(param.value)}<br/>`
@@ -177,7 +192,7 @@ const renderChart = (data: ModelDailyItem[]) => {
       }
     },
     legend: {
-      data: ['输入Token', '输出Token', '费用(美元)'],
+      data: [inputName, outputName, costName],
       selected: selectedLegend
     },
     grid: {
@@ -197,18 +212,18 @@ const renderChart = (data: ModelDailyItem[]) => {
     yAxis: [
       {
         type: 'value' as const,
-        name: 'Token数',
+        name: tokenAxisName,
         position: 'left'
       },
       {
         type: 'value' as const,
-        name: '费用(美元)',
+        name: costName,
         position: 'right'
       }
     ],
     series: [
       {
-        name: '输入Token',
+        name: inputName,
         type: 'bar' as const,
         data: promptTokenData,
         itemStyle: {
@@ -225,7 +240,7 @@ const renderChart = (data: ModelDailyItem[]) => {
         }
       },
       {
-        name: '输出Token',
+        name: outputName,
         type: 'bar' as const,
         data: completionTokenData,
         itemStyle: {
@@ -242,7 +257,7 @@ const renderChart = (data: ModelDailyItem[]) => {
         }
       },
       {
-        name: '费用(美元)',
+        name: costName,
         type: 'bar' as const,
         yAxisIndex: 1,
         data: costData,
@@ -267,7 +282,7 @@ const renderChart = (data: ModelDailyItem[]) => {
   chartInstance.off('click')
   chartInstance.off('legendselectchanged')
   chartInstance.on('legendselectchanged', (params: any) => {
-    localStorage.setItem('modelDailyLegend', JSON.stringify(params.selected))
+    localStorage.setItem('modelDailyLegend:' + locale.value, JSON.stringify(params.selected))
   })
   chartInstance.on('click', (params: any) => {
     if (params.componentType === 'series') {
@@ -293,6 +308,12 @@ const handleResize = () => {
   }
 }
 
+watch(locale, () => {
+  if (chartContainer.value && hasRendered.value) {
+    renderChart()
+  }
+})
+
 onMounted(() => {
   loadData()
   nextTick(() => {
@@ -303,6 +324,7 @@ onMounted(() => {
 onUnmounted(() => {
   if (chartInstance) {
     chartInstance.dispose()
+    chartInstance = null
   }
   window.removeEventListener('resize', handleResize)
 })

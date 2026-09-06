@@ -12,9 +12,9 @@ import java.time.OffsetDateTime;
 /**
  * new-api 的 users 表实体（只读映射）。
  *
- * <p>字段与 db/MySQL.sql（以及同步的 db/PostgreSQL.sql）中 new-api v1.0.0-rc.32 的
+ * <p>字段与 db/MySQL.sql 中 new-api v1.0.0-rc.32 的
  * users 表结构保持一致；数据库表结构由 new-api 自身维护，本应用不做任何写入/DDL，
- * 因此实体不再重复声明索引（索引以 db/MySQL.sql、db/PostgreSQL.sql 为准）。
+ * 因此实体不再重复声明索引（索引以 db/MySQL.sql 为准）。
  */
 @Entity
 @Table(name = "users")

@@ -2,49 +2,49 @@
   <el-card class="user-balance">
     <template #header>
       <div class="card-header">
-        <span>用户余额表</span>
+        <span>{{ t('userBalance.title') }}</span>
         <el-button type="primary" size="small" @click="loadData" :loading="loading">
           <el-icon><Refresh /></el-icon>
-          刷新
+          {{ t('userBalance.refresh') }}
         </el-button>
       </div>
     </template>
     <el-table :data="tableData" stripe style="width: 100%" v-loading="loading" :default-sort="{ prop: 'remainingBalance', order: 'ascending' }">
-      <el-table-column prop="username" label="用户名" width="120" />
-      <el-table-column prop="displayName" label="显示名称" width="150" />
-      <el-table-column prop="email" label="邮箱" width="200" />
-      <el-table-column prop="remainingBalance" label="剩余费用(美元)" width="140" sortable align="right">
+      <el-table-column prop="username" :label="t('userBalance.username')" width="120" />
+      <el-table-column prop="displayName" :label="t('userBalance.displayName')" width="150" />
+      <el-table-column prop="email" :label="t('userBalance.email')" width="200" />
+      <el-table-column prop="remainingBalance" :label="t('userBalance.remainingBalance')" width="140" sortable align="right">
         <template #default="{ row }">
           <span :class="{ 'low-balance': row.remainingBalance < 1 }">
             {{ row.remainingBalance.toFixed(2) }}
           </span>
         </template>
       </el-table-column>
-      <el-table-column prop="spentBalance" label="已花费(美元)" width="140" sortable align="right">
+      <el-table-column prop="spentBalance" :label="t('userBalance.spentBalance')" width="140" sortable align="right">
         <template #default="{ row }">
           {{ row.spentBalance.toFixed(2) }}
         </template>
       </el-table-column>
-      <el-table-column prop="quota" label="剩余Quota" width="120" sortable align="right">
+      <el-table-column prop="quota" :label="t('userBalance.remainingQuota')" width="120" sortable align="right">
         <template #default="{ row }">
           {{ formatNumber(row.quota) }}
         </template>
       </el-table-column>
-      <el-table-column prop="usedQuota" label="已用Quota" width="120" sortable align="right">
+      <el-table-column prop="usedQuota" :label="t('userBalance.usedQuota')" width="120" sortable align="right">
         <template #default="{ row }">
           {{ formatNumber(row.usedQuota) }}
         </template>
       </el-table-column>
-      <el-table-column prop="requestCount" label="请求次数" width="120" sortable align="right">
+      <el-table-column prop="requestCount" :label="t('userBalance.requestCount')" width="120" sortable align="right">
         <template #default="{ row }">
           {{ formatNumber(row.requestCount) }}
         </template>
       </el-table-column>
-      <el-table-column prop="group" label="用户组" width="100" />
-      <el-table-column prop="status" label="状态" width="80">
+      <el-table-column prop="group" :label="t('userBalance.group')" width="100" />
+      <el-table-column prop="status" :label="t('userBalance.status')" width="80">
         <template #default="{ row }">
           <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small">
-            {{ row.status === 1 ? '正常' : '禁用' }}
+            {{ row.status === 1 ? t('userBalance.normal') : t('userBalance.disabled') }}
           </el-tag>
         </template>
       </el-table-column>
@@ -57,8 +57,10 @@ import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import { getUserBalances } from '@/api/analyzer'
+import { useI18n } from 'vue-i18n'
 import type { UserBalanceItem } from '@/api/analyzer'
 
+const { t } = useI18n({ useScope: 'global' })
 const loading = ref(false)
 const tableData = ref<UserBalanceItem[]>([])
 
@@ -68,7 +70,7 @@ const loadData = async () => {
     const response = await getUserBalances()
     tableData.value = response.data
   } catch (error) {
-    ElMessage.error('加载数据失败')
+    ElMessage.error(t('msg.loadFailed'))
   } finally {
     loading.value = false
   }

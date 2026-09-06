@@ -2,31 +2,31 @@
   <div class="date-user-selector">
     <div class="date-mode-selector">
       <el-radio-group v-model="dateMode" size="small" @change="handleDateModeChange">
-        <el-radio-button value="single">单日</el-radio-button>
-        <el-radio-button value="range">日期范围</el-radio-button>
+        <el-radio-button value="single">{{ t('selector.singleDay') }}</el-radio-button>
+        <el-radio-button value="range">{{ t('selector.dateRange') }}</el-radio-button>
       </el-radio-group>
     </div>
     <div class="date-selector" v-if="dateMode === 'single'">
-      <el-button @click="prevDay" :disabled="loading" size="small">前一天</el-button>
+      <el-button @click="prevDay" :disabled="loading" size="small">{{ t('selector.previousDay') }}</el-button>
       <el-date-picker
         v-model="selectedDate"
         type="date"
-        placeholder="选择日期"
+        :placeholder="t('selector.selectDate')"
         style="width: 200px; margin: 0 10px"
         value-format="YYYY-MM-DD"
         size="small"
         :disabled-date="disableFutureDate"
         @change="handleDateChange"
       />
-      <el-button @click="nextDay" :disabled="loading" size="small">后一天</el-button>
+      <el-button @click="nextDay" :disabled="loading" size="small">{{ t('selector.nextDay') }}</el-button>
     </div>
     <div class="date-range-selector" v-if="dateMode === 'range'">
       <el-date-picker
         v-model="dateRange"
         type="daterange"
-        range-separator="至"
-        start-placeholder="开始日期"
-        end-placeholder="结束日期"
+        :range-separator="t('selector.rangeSeparator')"
+        :start-placeholder="t('selector.startPlaceholder')"
+        :end-placeholder="t('selector.endPlaceholder')"
         style="width: 280px; margin: 0 10px"
         value-format="YYYY-MM-DD"
         size="small"
@@ -34,21 +34,21 @@
         @change="handleDateRangeChange"
       />
       <el-button-group>
-        <el-button @click="selectRecentDays(7)" :disabled="loading" size="small">最近7天</el-button>
-        <el-button @click="selectRecentDays(30)" :disabled="loading" size="small">最近30天</el-button>
+        <el-button @click="selectRecentDays(7)" :disabled="loading" size="small">{{ t('selector.recentNDays', { days: 7 }) }}</el-button>
+        <el-button @click="selectRecentDays(30)" :disabled="loading" size="small">{{ t('selector.recentNDays', { days: 30 }) }}</el-button>
       </el-button-group>
     </div>
     <div class="user-selector" v-if="showUserSelector">
-      <el-select v-model="userMode" placeholder="选择人员" size="small" style="width: 150px" @change="handleUserModeChange">
-        <el-option label="全部人员" value="all" />
-        <el-option label="指定人员" value="specific" />
+      <el-select v-model="userMode" :placeholder="t('selector.selectUser')" size="small" style="width: 150px" @change="handleUserModeChange">
+        <el-option :label="t('selector.allUsers')" value="all" />
+        <el-option :label="t('selector.specificUser')" value="specific" />
       </el-select>
       <el-select
         v-if="userMode === 'specific'"
         v-model="selectedUsers"
         :loading="loadingUsers"
         :disabled="loadingUsers"
-        placeholder="选择人员"
+        :placeholder="t('selector.selectUser')"
         size="small"
         style="width: 400px; margin-left: 10px"
         multiple
@@ -78,6 +78,7 @@
 import { ref, watch, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getUsers } from '@/api/analyzer'
+import { useI18n } from 'vue-i18n'
 import type { UserItem } from '@/api/analyzer'
 
 interface Props {
@@ -98,6 +99,8 @@ const props = withDefaults(defineProps<Props>(), {
   defaultDateMode: 'range',
   showUserSelector: true
 })
+
+const { t } = useI18n({ useScope: 'global' })
 
 const emit = defineEmits<Emits>()
 
@@ -196,7 +199,7 @@ const loadUsers = async () => {
     const response = await getUsers()
     userList.value = response.data
   } catch (error) {
-    ElMessage.error('加载用户列表失败')
+    ElMessage.error(t('msg.loadUsersFailed'))
   } finally {
     loadingUsers.value = false
   }

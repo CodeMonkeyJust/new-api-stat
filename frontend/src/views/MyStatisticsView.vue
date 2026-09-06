@@ -2,7 +2,7 @@
   <el-card class="my-statistics">
     <template #header>
       <div class="card-header">
-        <span>个人统计</span>
+        <span>{{ t('myStats.title') }}</span>
         <span class="user-tag" v-if="displayName">{{ displayName }}</span>
       </div>
     </template>
@@ -26,22 +26,22 @@
     </div>
     <div ref="chartContainer" class="chart-container" v-loading="loading"></div>
     <div class="table-section">
-      <h3>模型明细</h3>
+      <h3>{{ t('myStats.modelDetails') }}</h3>
       <el-table :data="models" stripe style="width: 100%" v-loading="loading">
-        <el-table-column prop="model" label="模型" min-width="220" show-overflow-tooltip />
-        <el-table-column prop="promptTokens" label="输入Token" width="130" align="right">
+        <el-table-column prop="model" :label="t('metric.model')" min-width="220" show-overflow-tooltip />
+        <el-table-column prop="promptTokens" :label="t('metric.inputToken')" width="130" align="right">
           <template #default="{ row }">{{ formatNumber(row.promptTokens) }}</template>
         </el-table-column>
-        <el-table-column prop="completionTokens" label="输出Token" width="130" align="right">
+        <el-table-column prop="completionTokens" :label="t('metric.outputToken')" width="130" align="right">
           <template #default="{ row }">{{ formatNumber(row.completionTokens) }}</template>
         </el-table-column>
-        <el-table-column prop="totalTokens" label="总Token" width="130" align="right">
+        <el-table-column prop="totalTokens" :label="t('metric.totalToken')" width="130" align="right">
           <template #default="{ row }">{{ formatNumber(row.totalTokens) }}</template>
         </el-table-column>
-        <el-table-column prop="cost" label="费用(美元)" width="130" align="right">
+        <el-table-column prop="cost" :label="t('metric.costUsd')" width="130" align="right">
           <template #default="{ row }">{{ '$' + Number(row.cost || 0).toFixed(2) }}</template>
         </el-table-column>
-        <el-table-column prop="callCount" label="调用次数" width="110" align="right">
+        <el-table-column prop="callCount" :label="t('metric.callCount')" width="110" align="right">
           <template #default="{ row }">{{ row.callCount.toLocaleString() }}</template>
         </el-table-column>
       </el-table>
@@ -50,19 +50,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
-import * as echarts from 'echarts'
+import type * as echarts from 'echarts'
+import { useI18n } from 'vue-i18n'
+import { useAppLocale } from '@/composables/useAppLocale'
+import { initChart } from '@/utils/chart'
 import { getPersonalStats } from '@/api/analyzer'
 import type { PersonalModelItem } from '@/api/analyzer'
 import type { UserDTO } from '@/api/auth'
 import DateUserSelector from '@/components/DateUserSelector.vue'
+
+const { t } = useI18n({ useScope: 'global' })
+const { locale } = useAppLocale()
 
 const loading = ref(false)
 const startDate = ref('')
 const endDate = ref('')
 const models = ref<PersonalModelItem[]>([])
 const chartContainer = ref<HTMLElement>()
+const hasRendered = ref(false)
 let chartInstance: echarts.ECharts | null = null
 
 const currentUser = ref<UserDTO | null>(null)
@@ -94,11 +101,11 @@ const formatNumber = (num: number): string => {
 }
 
 const summaryCards = computed(() => [
-  { label: '调用次数', value: summary.value.totalCount.toLocaleString(), cost: false },
-  { label: '输入Token', value: formatNumber(summary.value.promptTokens), cost: false },
-  { label: '输出Token', value: formatNumber(summary.value.completionTokens), cost: false },
-  { label: '总Token', value: formatNumber(summary.value.totalTokens), cost: false },
-  { label: '费用(美元)', value: '$' + (summary.value.totalCost || 0).toFixed(2), cost: true }
+  { label: t('metric.callCount'), value: summary.value.totalCount.toLocaleString(), cost: false },
+  { label: t('metric.inputToken'), value: formatNumber(summary.value.promptTokens), cost: false },
+  { label: t('metric.outputToken'), value: formatNumber(summary.value.completionTokens), cost: false },
+  { label: t('metric.totalToken'), value: formatNumber(summary.value.totalTokens), cost: false },
+  { label: t('metric.costUsd'), value: '$' + (summary.value.totalCost || 0).toFixed(2), cost: true }
 ])
 
 const handleDateChange = (date: string) => {
@@ -133,8 +140,8 @@ const loadData = async () => {
     models.value = data.models ?? []
     renderChart()
   } catch (error) {
-    console.error('加载个人统计失败:', error)
-    ElMessage.error('加载数据失败')
+    console.error('Load personal stats error:', error)
+    ElMessage.error(t('msg.loadFailed'))
   } finally {
     loading.value = false
   }
@@ -154,16 +161,23 @@ const readLegendState = (key: string, fallback: Record<string, boolean> | string
 const renderChart = () => {
   if (!chartContainer.value) return
 
-  if (!chartInstance) {
-    chartInstance = echarts.init(chartContainer.value)
+  if (chartInstance) {
+    chartInstance.dispose()
   }
+  chartInstance = initChart(chartContainer.value, locale.value)
+  hasRendered.value = true
+
+  const inputName = t('metric.inputToken')
+  const outputName = t('metric.outputToken')
+  const costName = t('metric.costUsd')
+  const tokenAxisName = t('metric.tokenAxis')
 
   const modelNames = models.value.map(item => item.model)
   const promptTokenData = models.value.map(item => item.promptTokens)
   const completionTokenData = models.value.map(item => item.completionTokens)
   const costData = models.value.map(item => item.cost)
 
-  const selectedLegend = readLegendState('myStatsLegend', ['输入Token', '输出Token', '费用(美元)'])
+  const selectedLegend = readLegendState('myStatsLegend:' + locale.value, null)
 
   const option = {
     tooltip: {
@@ -175,7 +189,7 @@ const renderChart = () => {
         if (!params || params.length === 0) return ''
         let result = params[0].name + '<br/>'
         params.forEach((param: any) => {
-          if (param.seriesName === '费用(美元)') {
+          if (param.seriesName === costName) {
             result += `${param.marker} ${param.seriesName}: $${Number(param.value || 0).toFixed(2)}<br/>`
           } else {
             result += `${param.marker} ${param.seriesName}: ${formatNumber(param.value)}<br/>`
@@ -185,7 +199,7 @@ const renderChart = () => {
       }
     },
     legend: {
-      data: ['输入Token', '输出Token', '费用(美元)'],
+      data: [inputName, outputName, costName],
       selected: selectedLegend,
       top: 10
     },
@@ -207,7 +221,7 @@ const renderChart = () => {
     yAxis: [
       {
         type: 'value' as const,
-        name: 'Token数',
+        name: tokenAxisName,
         position: 'left',
         axisLabel: {
           formatter: (value: number) => formatNumber(value)
@@ -215,7 +229,7 @@ const renderChart = () => {
       },
       {
         type: 'value' as const,
-        name: '费用(美元)',
+        name: costName,
         position: 'right',
         axisLabel: {
           formatter: (value: number) => value.toFixed(2)
@@ -224,7 +238,7 @@ const renderChart = () => {
     ],
     series: [
       {
-        name: '输入Token',
+        name: inputName,
         type: 'bar' as const,
         data: promptTokenData,
         itemStyle: {
@@ -241,7 +255,7 @@ const renderChart = () => {
         }
       },
       {
-        name: '输出Token',
+        name: outputName,
         type: 'bar' as const,
         data: completionTokenData,
         itemStyle: {
@@ -258,7 +272,7 @@ const renderChart = () => {
         }
       },
       {
-        name: '费用(美元)',
+        name: costName,
         type: 'bar' as const,
         yAxisIndex: 1,
         data: costData,
@@ -282,7 +296,7 @@ const renderChart = () => {
 
   chartInstance.off('legendselectchanged')
   chartInstance.on('legendselectchanged', (params: any) => {
-    localStorage.setItem('myStatsLegend', JSON.stringify(params.selected))
+    localStorage.setItem('myStatsLegend:' + locale.value, JSON.stringify(params.selected))
   })
 }
 
@@ -291,6 +305,12 @@ const handleResize = () => {
     chartInstance.resize()
   }
 }
+
+watch(locale, () => {
+  if (chartContainer.value && hasRendered.value) {
+    renderChart()
+  }
+})
 
 onMounted(() => {
   window.addEventListener('resize', handleResize)

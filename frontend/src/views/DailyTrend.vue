@@ -2,7 +2,7 @@
   <el-card class="daily-trend">
     <template #header>
       <div class="card-header">
-        <span>每日消耗趋势</span>
+        <span>{{ t('daily.title') }}</span>
       </div>
     </template>
     <DateUserSelector
@@ -16,7 +16,7 @@
     <div ref="chartContainer" class="chart-container" v-loading="loading"></div>
     <UserDetailsTable
       v-if="selectedDate !== null"
-      :title="`${selectedDate} 人员详情`"
+      :title="t('daily.userDetailsTitle', { date: selectedDate })"
       :data="userDetails"
       :loading="userDetailsLoading"
     />
@@ -24,6 +24,20 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import type { QueryRequest } from '@/api/analyzer'
+import { ElMessage } from 'element-plus'
+import type * as echarts from 'echarts'
+import { useI18n } from 'vue-i18n'
+import { useAppLocale } from '@/composables/useAppLocale'
+import { initChart } from '@/utils/chart'
+import { getDaily } from '@/api/analyzer'
+import type { DailyItem } from '@/api/analyzer'
+import UserDetailsTable from '@/components/UserDetailsTable.vue'
+import DateUserSelector from '@/components/DateUserSelector.vue'
+
+const { t } = useI18n({ useScope: 'global' })
+const { locale } = useAppLocale()
 
 const readLegendState = (key: string, fallback: Record<string, boolean> | string[] | null = null) => {
   try {
@@ -36,15 +50,6 @@ const readLegendState = (key: string, fallback: Record<string, boolean> | string
   }
 }
 
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
-import type { QueryRequest } from '@/api/analyzer'
-import { ElMessage } from 'element-plus'
-import * as echarts from 'echarts'
-import { getDaily } from '@/api/analyzer'
-import type { DailyItem } from '@/api/analyzer'
-import UserDetailsTable from '@/components/UserDetailsTable.vue'
-import DateUserSelector from '@/components/DateUserSelector.vue'
-
 const loading = ref(false)
 const userDetailsLoading = ref(false)
 const startDate = ref('')
@@ -54,6 +59,8 @@ const specificUser = ref('')
 const selectedDate = ref<string | null>(null)
 const userDetails = ref<any[]>([])
 const chartContainer = ref<HTMLElement>()
+const chartData = ref<DailyItem[]>([])
+const hasRendered = ref(false)
 let chartInstance: echarts.ECharts | null = null
 
 const handleDateChange = (date: string) => {
@@ -104,7 +111,8 @@ const loadUserDetails = async (date: string) => {
     const response = await getDaily(params)
     userDetails.value = response.data
   } catch (error) {
-    ElMessage.error('加载人员详情失败')
+    console.error('Load user details error:', error)
+    ElMessage.error(t('msg.loadUserDetailsFailed'))
   } finally {
     userDetailsLoading.value = false
   }
@@ -128,27 +136,37 @@ const loadData = async () => {
     }
 
     const response = await getDaily(params)
-    renderChart(response.data)
+    chartData.value = response.data
+    renderChart()
   } catch (error) {
-    ElMessage.error('加载数据失败')
+    console.error('Load data error:', error)
+    ElMessage.error(t('msg.loadFailed'))
   } finally {
     loading.value = false
   }
 }
 
-const renderChart = (data: DailyItem[]) => {
+const renderChart = () => {
   if (!chartContainer.value) return
 
-  if (!chartInstance) {
-    chartInstance = echarts.init(chartContainer.value)
+  if (chartInstance) {
+    chartInstance.dispose()
   }
+  chartInstance = initChart(chartContainer.value, locale.value)
+  hasRendered.value = true
 
+  const inputName = t('metric.inputToken')
+  const outputName = t('metric.outputToken')
+  const costName = t('metric.costUsd')
+  const tokenAxisName = t('metric.tokenAxis')
+
+  const data = chartData.value
   const dates = data.map(item => item.date)
   const promptTokens = data.map(item => item.promptTokens)
   const completionTokens = data.map(item => item.completionTokens)
   const costs = data.map(item => item.cost)
 
-  const selectedLegend = readLegendState('dailyTrendLegend', ['输入Token', '输出Token', '费用(美元)'])
+  const selectedLegend = readLegendState('dailyTrendLegend:' + locale.value, null)
 
   const option = {
     tooltip: {
@@ -165,7 +183,7 @@ const renderChart = (data: DailyItem[]) => {
       }
     },
     legend: {
-      data: ['输入Token', '输出Token', '费用(美元)'],
+      data: [inputName, outputName, costName],
       selected: selectedLegend,
       top: 10
     },
@@ -186,7 +204,7 @@ const renderChart = (data: DailyItem[]) => {
     yAxis: [
       {
         type: 'value',
-        name: 'Token数',
+        name: tokenAxisName,
         position: 'left',
         axisLabel: {
           formatter: (value: number) => formatNumber(value)
@@ -194,7 +212,7 @@ const renderChart = (data: DailyItem[]) => {
       },
       {
         type: 'value',
-        name: '费用(美元)',
+        name: costName,
         position: 'right',
         axisLabel: {
           formatter: (value: number) => value.toFixed(2)
@@ -203,7 +221,7 @@ const renderChart = (data: DailyItem[]) => {
     ],
     series: [
       {
-        name: '输入Token',
+        name: inputName,
         type: 'line',
         data: promptTokens,
         label: {
@@ -213,7 +231,7 @@ const renderChart = (data: DailyItem[]) => {
         }
       },
       {
-        name: '输出Token',
+        name: outputName,
         type: 'line',
         data: completionTokens,
         label: {
@@ -223,7 +241,7 @@ const renderChart = (data: DailyItem[]) => {
         }
       },
       {
-        name: '费用(美元)',
+        name: costName,
         type: 'line',
         yAxisIndex: 1,
         data: costs,
@@ -241,7 +259,7 @@ const renderChart = (data: DailyItem[]) => {
   chartInstance.off('click')
   chartInstance.off('legendselectchanged')
   chartInstance.on('legendselectchanged', (params: any) => {
-    localStorage.setItem('dailyTrendLegend', JSON.stringify(params.selected))
+    localStorage.setItem('dailyTrendLegend:' + locale.value, JSON.stringify(params.selected))
   })
   chartInstance.on('click', (params: any) => {
     selectedDate.value = params.name
@@ -263,6 +281,12 @@ const handleResize = () => {
     chartInstance.resize()
   }
 }
+
+watch(locale, () => {
+  if (chartContainer.value && hasRendered.value) {
+    renderChart()
+  }
+})
 
 onMounted(() => {
   window.addEventListener('resize', handleResize)

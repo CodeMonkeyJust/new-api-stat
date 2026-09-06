@@ -2,10 +2,10 @@
   <el-card class="dashboard">
     <template #header>
       <div class="card-header">
-        <span>仪表盘</span>
+        <span>{{ t('dashboard.title') }}</span>
         <el-button type="primary" size="small" @click="loadData" :loading="loading">
           <el-icon><Refresh /></el-icon>
-          刷新
+          {{ t('dashboard.refresh') }}
         </el-button>
       </div>
     </template>
@@ -14,27 +14,27 @@
       <el-col :span="8">
         <el-card class="summary-card total">
           <template #header>
-            <div class="card-title">汇总统计</div>
+            <div class="card-title">{{ t('summary.totalTitle') }}</div>
           </template>
           <div class="summary-content">
             <div class="summary-item">
-              <span class="label">请求数</span>
+              <span class="label">{{ t('summary.requestCount') }}</span>
               <span class="value">{{ formatNumber(data.total?.totalCount || 0) }}</span>
             </div>
             <div class="summary-item">
-              <span class="label">输入Token</span>
+              <span class="label">{{ t('metric.inputToken') }}</span>
               <span class="value">{{ formatNumber(data.total?.promptTokens || 0) }}</span>
             </div>
             <div class="summary-item">
-              <span class="label">输出Token</span>
+              <span class="label">{{ t('metric.outputToken') }}</span>
               <span class="value">{{ formatNumber(data.total?.completionTokens || 0) }}</span>
             </div>
             <div class="summary-item">
-              <span class="label">花费(美元)</span>
+              <span class="label">{{ t('metric.costUsdAxis') }}</span>
               <span class="value">{{ (data.total?.totalCost || 0).toFixed(2) }}</span>
             </div>
             <div class="summary-item">
-              <span class="label">平均耗时(ms)</span>
+              <span class="label">{{ t('summary.avgTime') }}</span>
               <span class="value">{{ (data.total?.avgTime || 0).toFixed(2) }}</span>
             </div>
           </div>
@@ -43,27 +43,27 @@
       <el-col :span="8">
         <el-card class="summary-card today">
           <template #header>
-            <div class="card-title">今日统计</div>
+            <div class="card-title">{{ t('summary.todayTitle') }}</div>
           </template>
           <div class="summary-content">
             <div class="summary-item">
-              <span class="label">请求数</span>
+              <span class="label">{{ t('summary.requestCount') }}</span>
               <span class="value">{{ formatNumber(data.today?.totalCount || 0) }}</span>
             </div>
             <div class="summary-item">
-              <span class="label">输入Token</span>
+              <span class="label">{{ t('metric.inputToken') }}</span>
               <span class="value">{{ formatNumber(data.today?.promptTokens || 0) }}</span>
             </div>
             <div class="summary-item">
-              <span class="label">输出Token</span>
+              <span class="label">{{ t('metric.outputToken') }}</span>
               <span class="value">{{ formatNumber(data.today?.completionTokens || 0) }}</span>
             </div>
             <div class="summary-item">
-              <span class="label">花费(美元)</span>
+              <span class="label">{{ t('metric.costUsdAxis') }}</span>
               <span class="value">{{ (data.today?.totalCost || 0).toFixed(2) }}</span>
             </div>
             <div class="summary-item">
-              <span class="label">平均耗时(ms)</span>
+              <span class="label">{{ t('summary.avgTime') }}</span>
               <span class="value">{{ (data.today?.avgTime || 0).toFixed(2) }}</span>
             </div>
           </div>
@@ -72,27 +72,27 @@
       <el-col :span="8">
         <el-card class="summary-card yesterday">
           <template #header>
-            <div class="card-title">昨日统计</div>
+            <div class="card-title">{{ t('summary.yesterdayTitle') }}</div>
           </template>
           <div class="summary-content">
             <div class="summary-item">
-              <span class="label">请求数</span>
+              <span class="label">{{ t('summary.requestCount') }}</span>
               <span class="value">{{ formatNumber(data.yesterday?.totalCount || 0) }}</span>
             </div>
             <div class="summary-item">
-              <span class="label">输入Token</span>
+              <span class="label">{{ t('metric.inputToken') }}</span>
               <span class="value">{{ formatNumber(data.yesterday?.promptTokens || 0) }}</span>
             </div>
             <div class="summary-item">
-              <span class="label">输出Token</span>
+              <span class="label">{{ t('metric.outputToken') }}</span>
               <span class="value">{{ formatNumber(data.yesterday?.completionTokens || 0) }}</span>
             </div>
             <div class="summary-item">
-              <span class="label">花费(美元)</span>
+              <span class="label">{{ t('metric.costUsdAxis') }}</span>
               <span class="value">{{ (data.yesterday?.totalCost || 0).toFixed(2) }}</span>
             </div>
             <div class="summary-item">
-              <span class="label">平均耗时(ms)</span>
+              <span class="label">{{ t('summary.avgTime') }}</span>
               <span class="value">{{ (data.yesterday?.avgTime || 0).toFixed(2) }}</span>
             </div>
           </div>
@@ -102,7 +102,7 @@
 
     <el-card class="top-users-card">
       <template #header>
-        <div class="card-title">最近7天每日Top用户</div>
+        <div class="card-title">{{ t('summary.topUsers7Days') }}</div>
       </template>
       <div ref="chartContainer" class="chart-container"></div>
     </el-card>
@@ -110,12 +110,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
-import * as echarts from 'echarts'
+import type * as echarts from 'echarts'
+import { useI18n } from 'vue-i18n'
+import { useAppLocale } from '@/composables/useAppLocale'
+import { initChart } from '@/utils/chart'
 import { getDashboard } from '@/api/analyzer'
 import type { DashboardResponse } from '@/api/analyzer'
+
+const { t } = useI18n({ useScope: 'global' })
+const { locale } = useAppLocale()
 
 const loading = ref(false)
 const data = ref<DashboardResponse>({
@@ -136,7 +142,7 @@ const loadData = async () => {
     renderChart()
   } catch (error) {
     console.error('Load data error:', error)
-    ElMessage.error('加载数据失败')
+    ElMessage.error(t('msg.loadFailed'))
   } finally {
     loading.value = false
   }
@@ -157,8 +163,13 @@ const renderChart = () => {
   if (chartInstance) {
     chartInstance.dispose()
   }
+  chartInstance = initChart(chartContainer.value, locale.value)
 
-  chartInstance = echarts.init(chartContainer.value)
+  const costName = t('metric.cost')
+  const inputName = t('metric.inputToken')
+  const outputName = t('metric.outputToken')
+  const costUsdName = t('metric.costUsdAxis')
+  const tokenName = t('metric.tokenAxis')
 
   const dates = data.value.last7DaysTopUsers.map(item => item.date)
   const costData = data.value.last7DaysTopUsers.map(item => ({
@@ -186,7 +197,7 @@ const renderChart = () => {
           const data = param.data
           const name = data.name
           const val = data.value
-          const formattedVal = param.seriesName === '花费' ? `$${val.toFixed(2)}` : formatNumber(val)
+          const formattedVal = param.seriesName === costName ? `$${val.toFixed(2)}` : formatNumber(val)
           result += `<div style="display: flex; justify-content: space-between; min-width: 200px;">
             <span style="color: ${param.color}; margin-right: 10px;">${param.seriesName}:</span>
             <span style="font-weight: 500;">${name}</span>
@@ -197,7 +208,7 @@ const renderChart = () => {
       }
     },
     legend: {
-      data: ['花费', '输入Token', '输出Token'],
+      data: [costName, inputName, outputName],
       top: 0
     },
     grid: {
@@ -217,7 +228,7 @@ const renderChart = () => {
     yAxis: [
       {
         type: 'value',
-        name: '花费(美元)',
+        name: costUsdName,
         position: 'left',
         axisLabel: {
           formatter: '${value}'
@@ -225,7 +236,7 @@ const renderChart = () => {
       },
       {
         type: 'value',
-        name: 'Token数',
+        name: tokenName,
         position: 'right',
         axisLabel: {
           formatter: (value: number) => formatNumber(value)
@@ -234,7 +245,7 @@ const renderChart = () => {
     ],
     series: [
       {
-        name: '花费',
+        name: costName,
         type: 'bar',
         data: costData,
         itemStyle: {
@@ -250,7 +261,7 @@ const renderChart = () => {
         }
       },
       {
-        name: '输入Token',
+        name: inputName,
         type: 'bar',
         yAxisIndex: 1,
         data: promptTokensData,
@@ -267,7 +278,7 @@ const renderChart = () => {
         }
       },
       {
-        name: '输出Token',
+        name: outputName,
         type: 'bar',
         yAxisIndex: 1,
         data: completionTokensData,
@@ -293,6 +304,12 @@ const handleResize = () => {
   chartInstance?.resize()
 }
 
+watch(locale, () => {
+  if (chartContainer.value) {
+    renderChart()
+  }
+})
+
 onMounted(() => {
   loadData()
   window.addEventListener('resize', handleResize)
@@ -301,6 +318,7 @@ onMounted(() => {
 onUnmounted(() => {
   if (chartInstance) {
     chartInstance.dispose()
+    chartInstance = null
   }
   window.removeEventListener('resize', handleResize)
 })

@@ -2,28 +2,28 @@
   <div v-if="data.length > 0" class="user-details">
     <h3>{{ title }}</h3>
     <el-table :data="data" stripe style="width: 100%" v-loading="loading">
-      <el-table-column prop="username" label="人员名称" width="150" />
-      <el-table-column prop="promptTokens" label="输入Token" width="120" align="right">
+      <el-table-column prop="username" :label="t('userDetails.username')" width="150" />
+      <el-table-column prop="promptTokens" :label="t('metric.inputToken')" width="120" align="right">
         <template #default="{ row }">
           {{ formatNumber(row.promptTokens) }}
         </template>
       </el-table-column>
-      <el-table-column prop="completionTokens" label="输出Token" width="120" align="right">
+      <el-table-column prop="completionTokens" :label="t('metric.outputToken')" width="120" align="right">
         <template #default="{ row }">
           {{ formatNumber(row.completionTokens) }}
         </template>
       </el-table-column>
-      <el-table-column prop="totalTokens" label="总Token数" width="120" align="right">
+      <el-table-column prop="totalTokens" :label="t('metric.totalTokenCount')" width="120" align="right">
         <template #default="{ row }">
           {{ formatNumber(row.totalTokens) }}
         </template>
       </el-table-column>
-      <el-table-column prop="cost" label="费用(美元)" width="120" align="right">
+      <el-table-column prop="cost" :label="t('metric.costUsd')" width="120" align="right">
         <template #default="{ row }">
           {{ row.cost.toFixed(2) }}
         </template>
       </el-table-column>
-      <el-table-column prop="callCount" label="调用次数" width="100" align="right" />
+      <el-table-column prop="callCount" :label="t('metric.callCount')" width="100" align="right" />
     </el-table>
   </div>
 </template>
@@ -37,6 +37,10 @@ interface UserDetailItem {
   cost: number
   callCount: number
 }
+
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n({ useScope: 'global' })
 
 interface Props {
   title: string

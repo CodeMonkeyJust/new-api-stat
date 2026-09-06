@@ -1,5 +1,7 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
+import i18n from '@/i18n'
+import { translateServerMessage } from '@/i18n/serverMessages'
 
 const request = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/newapi-stat-api/api',
@@ -20,7 +22,7 @@ request.interceptors.response.use(
 
     const res = response.data
     if (res && res.code !== undefined && res.code !== 200) {
-      ElMessage.error(res.message || '请求失败')
+      ElMessage.error(translateServerMessage(res.message) || i18n.global.t('msg.requestFailed'))
       return Promise.reject(new Error(res.message || '请求失败'))
     }
     return res
@@ -33,9 +35,9 @@ request.interceptors.response.use(
       }
     }
     if (error.response?.status === 403) {
-      ElMessage.error('当前账号没有访问权限')
+      ElMessage.error(i18n.global.t('msg.noAccess'))
     } else {
-      ElMessage.error(error.response?.data?.message || error.message || '网络错误')
+      ElMessage.error(translateServerMessage(error.response?.data?.message) || error.message || i18n.global.t('msg.networkError'))
     }
     return Promise.reject(error)
   }
