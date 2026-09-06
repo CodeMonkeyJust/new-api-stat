@@ -73,7 +73,7 @@ npm ci
 npm run dev
 ```
 
-Le serveur de développement écoute par défaut sur `http://localhost:3001`. Le proxy de développement transmet par défaut vers `http://localhost:8082` ; si le backend utilise une autre adresse, configurez-la via une variable d'environnement :
+Le serveur de développement écoute par défaut sur `http://localhost:3001` et le chemin de la page est `/new-api-stat/` par défaut (visiter `http://localhost:3001` redirige automatiquement vers ce chemin). Le proxy de développement transmet par défaut vers `http://localhost:8082` ; si le backend utilise une autre adresse, configurez-la via une variable d'environnement :
 
 ```powershell
 $env:VITE_API_PROXY_TARGET = "http://localhost:8082"
@@ -88,7 +88,7 @@ Compilation de production :
 npm run build
 ```
 
-Les artefacts de compilation se trouvent dans `frontend/dist/`. Servez-les avec un serveur web et configurez un proxy inverse de `/newapi-stat-api` vers le backend.
+Les artefacts de compilation se trouvent dans `frontend/dist/` et le chemin de la page est `/new-api-stat/` par défaut (par ex. `https://<votre-domaine>/new-api-stat/`). Faites correspondre `/new-api-stat/` à `frontend/dist/` et configurez un proxy inverse de `/newapi-stat-api` vers le backend. Pour déployer à la racine ou sous un autre chemin, définissez `VITE_BASE_PATH` avant la compilation (par ex. `VITE_BASE_PATH=/` ou `VITE_BASE_PATH=/stat/`).
 
 ## Configuration
 
@@ -173,6 +173,31 @@ docker run --rm -p 8082:8082 \
 ```
 
 Ne commettez jamais de mots de passe réels, d'adresses IP internes ou de `app.jar`. En production, injectez les identifiants via des Secrets, des variables d'environnement ou la configuration de la plateforme.
+
+### Déploiement avec Docker Compose
+
+Compose démarre le frontend nginx et le backend en une seule commande et construit automatiquement les deux images via des Dockerfiles multi-étapes : le backend utilise `backend/Dockerfile.compose` (package Maven → exécution JRE) et le frontend `frontend/Dockerfile` (build Node → hébergement nginx). Aucun JDK, Maven ou Node.js n'est requis sur la machine de build.
+
+1. Copiez `.env.example` vers `.env` et renseignez la connexion à une base de données new-api existante (cet outil ne fait que lire en lecture seule les tables `logs`/`users` ; il ne crée ni ne modifie jamais de tables, un compte en lecture seule est donc recommandé) :
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Sous Linux/macOS : `cp .env.example .env`
+
+2. Compilez puis démarrez :
+
+```bash
+docker compose up -d --build
+```
+
+3. Ouvrez `http://<hôte>:8080/new-api-stat/` (modifiez le port exposé via `WEB_PORT` dans `.env`). nginx fait un proxy inverse de `/newapi-stat-api` vers le conteneur backend : la page et l'API partagent la même origine, aucune configuration CORS supplémentaire n'est nécessaire ; arrêtez avec `docker compose down`.
+
+- L'exemple par défaut atteint la base new-api sur la machine hôte via `host.docker.internal` (compose ajoute automatiquement le mappage `host-gateway` sous Linux). Si la base s'exécute dans un autre réseau Docker, rattachez cette pile à ce réseau comme indiqué dans les commentaires de `compose.yaml` et remplacez l'hôte de `DB_URL` par le nom du service correspondant.
+- Pour MySQL, décommentez la ligne `DB_CONNECTION_INIT_SQL` dans `compose.yaml` (le fuseau horaire doit correspondre à `APP_TIME_ZONE`).
+- Le frontend utilise par défaut `VITE_BASE_PATH=/new-api-stat/` et `VITE_API_BASE_URL=/newapi-stat-api/api`, conformes aux préfixes `location` de `frontend/nginx.conf` ; pour un autre sous-chemin, modifiez en conséquence à la fois `VITE_BASE_PATH` du compose et `frontend/nginx.conf`.
+- Ne placez les identifiants réels que dans `.env` (ignoré par .gitignore) ou dans les Secrets de la plateforme — ne les committez jamais.
 
 ## Notes de sécurité
 

@@ -73,7 +73,7 @@ npm ci
 npm run dev
 ```
 
-開発サーバーのデフォルトアドレスは `http://localhost:3001` です。開発プロキシはデフォルトで `http://localhost:8082` に転送します。バックエンドが別のアドレスの場合は、環境変数で設定してください：
+開発サーバーのデフォルトアドレスは `http://localhost:3001` で、ページのパスはデフォルトで `/new-api-stat/` です（`http://localhost:3001` にアクセスすると自動的にこのパスへリダイレクトされます）。開発プロキシはデフォルトで `http://localhost:8082` に転送します。バックエンドが別のアドレスの場合は、環境変数で設定してください：
 
 ```powershell
 $env:VITE_API_PROXY_TARGET = "http://localhost:8082"
@@ -88,7 +88,7 @@ npm run dev
 npm run build
 ```
 
-ビルド成果物は `frontend/dist/` に出力されます。Web サーバーでホストし、`/newapi-stat-api` をバックエンドへリバースプロキシしてください。
+ビルド成果物は `frontend/dist/` に出力され、ページのパスはデフォルトで `/new-api-stat/` です（例：`https://<ドメイン>/new-api-stat/`）。`/new-api-stat/` を `frontend/dist/` にマッピングしてホストし、`/newapi-stat-api` をバックエンドへリバースプロキシしてください。ルートや別のパスにデプロイする場合は、ビルド前に `VITE_BASE_PATH` を設定してください（例：`VITE_BASE_PATH=/` または `VITE_BASE_PATH=/stat/`）。
 
 ## 設定
 
@@ -173,6 +173,31 @@ docker run --rm -p 8082:8082 \
 ```
 
 実際のパスワード、社内 IP、`app.jar` をリポジトリにコミットしないでください。本番環境では Secret、環境変数、プラットフォーム設定経由で認証情報を注入してください。
+
+### Docker Compose でのデプロイ
+
+Compose を使うと nginx フロントエンドとバックエンドを 1 コマンドで起動でき、マルチステージ Dockerfile で両イメージも自動ビルドされます：バックエンドは `backend/Dockerfile.compose`（Maven パッケージ → JRE 実行）、フロントエンドは `frontend/Dockerfile`（Node ビルド → nginx 配信）です。ビルド機に JDK・Maven・Node.js は不要です。
+
+1. `.env.example` を `.env` にコピーし、既存の new-api データベースへの接続情報を記入します（本ツールは new-api の `logs`/`users` テーブルを読み取り専用で利用し、テーブルの作成・変更は行いません。読み取り専用アカウントを推奨）：
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Linux/macOS の場合：`cp .env.example .env`
+
+2. ビルドして起動：
+
+```bash
+docker compose up -d --build
+```
+
+3. `http://<ホスト>:8080/new-api-stat/` を開きます（ホスト側ポートは `.env` の `WEB_PORT` で変更）。nginx が `/newapi-stat-api` をバックエンドコンテナへリバースプロキシするため、ページと API は同一オリジンとなり追加の CORS 設定は不要です。停止は `docker compose down`。
+
+- デフォルト例では `host.docker.internal` 経由でホスト上の new-api データベースへ接続します（Linux では compose が自動的に `host-gateway` マッピングを追加）。データベースが別の Docker ネットワークにある場合は、`compose.yaml` 末尾のコメントに従ってこのスタックをそのネットワークへ接続し、`DB_URL` のホスト名を対応するサービス名に変更してください。
+- MySQL を使う場合は `compose.yaml` の `DB_CONNECTION_INIT_SQL` 行のコメントを外してください（タイムゾーンは `APP_TIME_ZONE` と一致させること）。
+- フロントエンドは既定で `VITE_BASE_PATH=/new-api-stat/`、`VITE_API_BASE_URL=/newapi-stat-api/api` で、`frontend/nginx.conf` の location プレフィックスと対応しています。別のサブパスへデプロイする場合は compose の `VITE_BASE_PATH` と `frontend/nginx.conf` を合わせて変更してください。
+- 実際の認証情報は `.env`（.gitignore で無視）またはプラットフォームの Secret にのみ置き、コミットしないでください。
 
 ## セキュリティ上の注意
 

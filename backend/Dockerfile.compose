@@ -1,0 +1,30 @@
+# syntax=docker/dockerfile:1
+# Docker Compose 专用多阶段构建：Maven 打包 -> JRE 运行。
+# 构建机无需安装 JDK/Maven；最终运行时镜像与 backend/Dockerfile 保持一致。
+# 单独使用请改用 backend/Dockerfile（运行时镜像，需先本地构建并复制 app.jar）。
+
+# ---- 构建阶段：编译并打包 Spring Boot 可执行 JAR ----
+FROM maven:3.9-eclipse-temurin-17 AS build
+WORKDIR /build
+
+# 先复制 pom.xml 拉取依赖，利用 Docker 层缓存加速后续构建
+COPY pom.xml ./
+RUN mvn -B dependency:go-offline
+
+COPY src ./src
+# 仅匹配 spring-boot 重打包后的可执行 JAR（*.jar.original 不会被匹配）
+RUN mvn -B -DskipTests package \
+    && cp target/newapi-stat-api-*.jar app.jar
+
+# ---- 运行阶段：与 backend/Dockerfile 相同的运行时 ----
+FROM eclipse-temurin:17-jre
+WORKDIR /app
+
+COPY --from=build /build/app.jar /app/app.jar
+
+ENV TZ=Asia/Shanghai
+ENV JAVA_OPTS=""
+
+EXPOSE 8082
+
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/app.jar"]

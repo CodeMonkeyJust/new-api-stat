@@ -1,0 +1,11 @@
+# 前端 Docker 构建上下文排除项
+# 注意：Dockerfile 与 nginx.conf 必须保留在上下文中（COPY 指令需要读取它们）
+node_modules
+dist
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.log
+.vscode
+.git

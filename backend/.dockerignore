@@ -1,0 +1,11 @@
+# 后端 Docker 构建上下文排除项
+# 防止把本地 .env（真实凭据）与日志/构建产物带入镜像层或上下文。
+# 注意：不要排除 app.jar —— backend/Dockerfile（运行时镜像）需要从上下文 COPY app.jar。
+.env
+.env.*
+!.env.example
+!.env.*.example
+target
+*.log
+.vscode
+.git

@@ -1,0 +1,71 @@
+# =============================================================================
+# new-api-stat Docker Compose 部署
+#
+# 用法：
+#   1. 复制 .env.example 为 .env，并填写指向已有 new-api 数据库的连接信息
+#      （本工具只读复用 new-api 的 logs/users 表，compose 不包含数据库）
+#   2. docker compose up -d --build
+#   3. 浏览器访问 http://<主机>:8080/new-api-stat/
+#
+# 说明：
+#   - backend  由 backend/Dockerfile.compose 多阶段构建（Maven 打包 -> JRE 运行），
+#     构建机无需安装 JDK/Maven；frontend 由 frontend/Dockerfile 构建（Node 打包 -> nginx）。
+#   - 前端 nginx 把 /newapi-stat-api 反向代理到 backend 容器，默认与前端
+#     VITE_BASE_PATH=/new-api-stat/、VITE_API_BASE_URL=/newapi-stat-api/api 对应。
+#   - 若 new-api 数据库运行在其它 Docker 网络中，可把本 compose 挂到该网络
+#     （见下方 networks 注释），并把 .env 中 DB_URL 主机名改为对应服务名。
+# =============================================================================
+name: new-api-stat
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.compose
+    container_name: new-api-stat-backend
+    restart: unless-stopped
+    environment:
+      # 必填：new-api 数据库连接（只读账号即可）
+      DB_URL: ${DB_URL:?请在 .env 中设置 DB_URL（参考 .env.example）}
+      DB_USERNAME: ${DB_USERNAME:?请在 .env 中设置 DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD:?请在 .env 中设置 DB_PASSWORD}
+      # PostgreSQL 默认无需设置：application.yml 已内置 SET TIME ZONE '<APP_TIME_ZONE>'。
+      # 使用 MySQL 时取消下面注释（时区需与 APP_TIME_ZONE 对应的固定偏移）：
+      # DB_CONNECTION_INIT_SQL: "SET time_zone = '+08:00'"
+      APP_TIME_ZONE: ${APP_TIME_ZONE:-Asia/Shanghai}
+      APP_ANALYTICS_ROLES: ${APP_ANALYTICS_ROLES:-10,100}
+      SERVER_PORT: 8082
+      SERVER_CONTEXT_PATH: ${SERVER_CONTEXT_PATH:-/newapi-stat-api}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3001,http://localhost:5173}
+      SESSION_TIMEOUT: ${SESSION_TIMEOUT:-30m}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
+      SESSION_COOKIE_SAME_SITE: ${SESSION_COOKIE_SAME_SITE:-lax}
+      SWAGGER_ENABLED: ${SWAGGER_ENABLED:-false}
+    extra_hosts:
+      # Linux 下让容器内的 host.docker.internal 指向宿主机（Docker Desktop 已内置支持）
+      - "host.docker.internal:host-gateway"
+    # 需要从宿主机直接访问后端 API（如调试 Swagger）时取消注释：
+    # ports:
+    #   - "8082:8082"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # 若修改，请同步修改 frontend/nginx.conf 中的 location 前缀
+        VITE_BASE_PATH: ${VITE_BASE_PATH:-/new-api-stat/}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/newapi-stat-api/api}
+    container_name: new-api-stat-web
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    depends_on:
+      - backend
+
+# 可选：new-api 数据库运行在其它 Docker 网络时，取消注释并替换网络名，
+# 同时把 .env 中 DB_URL 的主机名改为该网络中数据库服务的名称。
+# networks:
+#   default:
+#     name: new-api_default
+#     external: true

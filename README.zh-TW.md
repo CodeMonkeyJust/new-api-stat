@@ -73,7 +73,7 @@ npm ci
 npm run dev
 ```
 
-開發伺服器預設位址為 `http://localhost:3001`。開發代理預設轉送到 `http://localhost:8082`；如後端使用其他位址，請透過環境變數設定：
+開發伺服器預設位址為 `http://localhost:3001`，頁面路徑預設為 `/new-api-stat/`（瀏覽 `http://localhost:3001` 會自動跳轉到該路徑）。開發代理預設轉送到 `http://localhost:8082`；如後端使用其他位址，請透過環境變數設定：
 
 ```powershell
 $env:VITE_API_PROXY_TARGET = "http://localhost:8082"
@@ -88,7 +88,7 @@ npm run dev
 npm run build
 ```
 
-建置產物位於 `frontend/dist/`，請使用 Web 伺服器託管，並將 `/newapi-stat-api` 反向代理到後端。
+建置產物位於 `frontend/dist/`，預設頁面路徑為 `/new-api-stat/`（例如 `https://<網域>/new-api-stat/`）。請將 `/new-api-stat/` 對應到 `frontend/dist/` 進行託管，並將 `/newapi-stat-api` 反向代理到後端。如需部署到根路徑或其他子路徑，請在建置前設定 `VITE_BASE_PATH`（例如 `VITE_BASE_PATH=/` 或 `VITE_BASE_PATH=/stat/`）。
 
 ## 設定
 
@@ -173,6 +173,31 @@ docker run --rm -p 8082:8082 \
 ```
 
 不要把真實密碼、內網 IP 或 `app.jar` 提交到倉庫。正式環境請透過 Secret、環境變數或平台設定注入憑證。
+
+### Docker Compose 部署
+
+Compose 可一鍵啟動「nginx 前端 + 後端」兩個服務，並自動完成多階段映像檔建置：後端使用 `backend/Dockerfile.compose`（Maven 打包 → JRE 執行），前端使用 `frontend/Dockerfile`（Node 建置 → nginx 託管）。建置機無需安裝 JDK、Maven 或 Node。
+
+1. 複製 `.env.example` 為 `.env`，填寫指向既有 new-api 資料庫的連線資訊（本工具以唯讀方式使用 new-api 的 `logs`/`users` 資料表，不會建立或修改資料表，建議使用唯讀帳號）：
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Linux/macOS 使用：`cp .env.example .env`
+
+2. 建置並啟動：
+
+```bash
+docker compose up -d --build
+```
+
+3. 瀏覽 `http://<主機>:8080/new-api-stat/`（對外埠號可用 `.env` 中的 `WEB_PORT` 修改）。nginx 已將 `/newapi-stat-api` 反向代理到後端容器，頁面與 API 同源，無需額外 CORS 設定；停止服務用 `docker compose down`。
+
+- 資料庫預設範例透過 `host.docker.internal` 存取主機上的 new-api 資料庫（Linux 下 compose 已自動加入 `host-gateway` 對應）。若資料庫執行於其他 Docker 網路，請依 `compose.yaml` 末尾註解將本堆疊加入該網路，並把 `.env` 中 `DB_URL` 的主機名稱改為對應服務名稱。
+- 使用 MySQL 時，請取消 `compose.yaml` 中 `DB_CONNECTION_INIT_SQL` 一行的註解（時區需與 `APP_TIME_ZONE` 對應）。
+- 前端預設 `VITE_BASE_PATH=/new-api-stat/`、`VITE_API_BASE_URL=/newapi-stat-api/api`，與 `frontend/nginx.conf` 的 location 前綴對應；如需部署到其他子路徑，請同步修改 compose 的 `VITE_BASE_PATH` 與 `frontend/nginx.conf`。
+- 真實憑證只寫入 `.env`（已被 .gitignore 忽略）或部署平台的 Secret，切勿提交到倉庫。
 
 ## 安全說明
 

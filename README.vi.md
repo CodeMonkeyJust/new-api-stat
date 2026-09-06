@@ -73,7 +73,7 @@ npm ci
 npm run dev
 ```
 
-Máy chủ phát triển mặc định tại `http://localhost:3001`. Proxy phát triển mặc định chuyển tiếp tới `http://localhost:8082`; nếu backend dùng địa chỉ khác, hãy cấu hình qua biến môi trường:
+Máy chủ phát triển mặc định tại `http://localhost:3001` và đường dẫn trang mặc định là `/new-api-stat/` (truy cập `http://localhost:3001` sẽ tự động chuyển hướng đến đường dẫn này). Proxy phát triển mặc định chuyển tiếp tới `http://localhost:8082`; nếu backend dùng địa chỉ khác, hãy cấu hình qua biến môi trường:
 
 ```powershell
 $env:VITE_API_PROXY_TARGET = "http://localhost:8082"
@@ -88,7 +88,7 @@ Bản dựng production:
 npm run build
 ```
 
-Sản phẩm dựng nằm trong `frontend/dist/`. Hãy dùng máy chủ web để lưu trữ và cấu hình reverse proxy `/newapi-stat-api` trỏ về backend.
+Sản phẩm dựng nằm trong `frontend/dist/` và đường dẫn trang mặc định là `/new-api-stat/` (ví dụ: `https://<tên-miền>/new-api-stat/`). Hãy ánh xạ `/new-api-stat/` tới `frontend/dist/` để lưu trữ và cấu hình reverse proxy `/newapi-stat-api` trỏ về backend. Để triển khai ở đường dẫn gốc hoặc đường dẫn khác, hãy đặt `VITE_BASE_PATH` trước khi dựng (ví dụ: `VITE_BASE_PATH=/` hoặc `VITE_BASE_PATH=/stat/`).
 
 ## Cấu hình
 
@@ -173,6 +173,31 @@ docker run --rm -p 8082:8082 \
 ```
 
 Đừng commit mật khẩu thật, IP nội bộ hoặc `app.jar` vào kho lưu trữ. Trong môi trường production, hãy đưa thông tin xác thực qua Secret, biến môi trường hoặc cấu hình nền tảng.
+
+### Triển khai bằng Docker Compose
+
+Compose khởi động frontend nginx và backend bằng một lệnh duy nhất, đồng thời tự động dựng cả hai image qua Dockerfile đa giai đoạn: backend dùng `backend/Dockerfile.compose` (đóng gói Maven → chạy JRE), frontend dùng `frontend/Dockerfile` (dựng Node → phục vụ bằng nginx). Máy dựng không cần cài JDK, Maven hay Node.js.
+
+1. Sao chép `.env.example` thành `.env` và điền thông tin kết nối tới cơ sở dữ liệu new-api hiện có (công cụ này chỉ đọc bảng `logs`/`users` của new-api, không tạo hay sửa bảng; nên dùng tài khoản chỉ đọc):
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Trên Linux/macOS: `cp .env.example .env`
+
+2. Dựng và khởi động:
+
+```bash
+docker compose up -d --build
+```
+
+3. Truy cập `http://<máy-chủ>:8080/new-api-stat/` (đổi cổng host qua `WEB_PORT` trong `.env`). nginx reverse proxy `/newapi-stat-api` tới container backend nên trang và API cùng nguồn gốc, không cần cấu hình CORS thêm; dừng bằng `docker compose down`.
+
+- Ví dụ mặc định kết nối tới cơ sở dữ liệu new-api trên máy host qua `host.docker.internal` (compose tự thêm ánh xạ `host-gateway` trên Linux). Nếu cơ sở dữ liệu chạy trong một Docker network khác, hãy nối stack này vào network đó theo chú thích cuối `compose.yaml` và đổi host trong `DB_URL` thành tên service tương ứng.
+- Với MySQL, hãy bỏ ghi chú dòng `DB_CONNECTION_INIT_SQL` trong `compose.yaml` (múi giờ phải khớp `APP_TIME_ZONE`).
+- Frontend mặc định dùng `VITE_BASE_PATH=/new-api-stat/` và `VITE_API_BASE_URL=/newapi-stat-api/api`, tương ứng với tiền tố `location` trong `frontend/nginx.conf`; nếu triển khai ở sub-path khác, hãy sửa đồng bộ `VITE_BASE_PATH` trong compose và `frontend/nginx.conf`.
+- Chỉ đặt thông tin xác thực thật trong `.env` (bị .gitignore bỏ qua) hoặc Secret của nền tảng — đừng commit chúng.
 
 ## Ghi chú bảo mật
 

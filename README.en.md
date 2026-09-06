@@ -73,7 +73,7 @@ npm ci
 npm run dev
 ```
 
-The dev server listens on `http://localhost:3001` by default. The dev proxy forwards to `http://localhost:8082` by default; if the backend runs elsewhere, configure it through an environment variable:
+The dev server listens on `http://localhost:3001` by default, and the app page path defaults to `/new-api-stat/` (visiting `http://localhost:3001` automatically redirects there). The dev proxy forwards to `http://localhost:8082` by default; if the backend runs elsewhere, configure it through an environment variable:
 
 ```powershell
 $env:VITE_API_PROXY_TARGET = "http://localhost:8082"
@@ -88,7 +88,7 @@ Production build:
 npm run build
 ```
 
-The build output is located in `frontend/dist/`. Serve it with a web server and reverse-proxy `/newapi-stat-api` to the backend.
+The build output is located in `frontend/dist/` and the page path defaults to `/new-api-stat/` (e.g. `https://<your-domain>/new-api-stat/`). Map `/new-api-stat/` to `frontend/dist/` and reverse-proxy `/newapi-stat-api` to the backend. To deploy at the site root or under another path, set `VITE_BASE_PATH` before building (e.g. `VITE_BASE_PATH=/` or `VITE_BASE_PATH=/stat/`).
 
 ## Configuration
 
@@ -173,6 +173,31 @@ docker run --rm -p 8082:8082 \
 ```
 
 Never commit real passwords, internal IPs or `app.jar`. In production, inject credentials through Secrets, environment variables or platform configuration.
+
+### Docker Compose Deployment
+
+Compose starts the nginx frontend and the backend with a single command and builds both images automatically via multi-stage Dockerfiles: the backend uses `backend/Dockerfile.compose` (Maven package → JRE runtime) and the frontend uses `frontend/Dockerfile` (Node build → nginx hosting). No JDK, Maven or Node.js is required on the build machine.
+
+1. Copy `.env.example` to `.env` and fill in the connection to an existing new-api database (this tool only reads the `logs`/`users` tables read-only; it never creates or alters tables, so a read-only account is recommended):
+
+```powershell
+Copy-Item .env.example .env
+```
+
+On Linux/macOS: `cp .env.example .env`
+
+2. Build and start:
+
+```bash
+docker compose up -d --build
+```
+
+3. Open `http://<host>:8080/new-api-stat/` (change the host port via `WEB_PORT` in `.env`). nginx reverse-proxies `/newapi-stat-api` to the backend container, so the page and API share the same origin and no extra CORS setup is needed; stop with `docker compose down`.
+
+- The default example reaches a new-api database on the host machine via `host.docker.internal` (compose adds the `host-gateway` mapping automatically on Linux). If the database runs in another Docker network, attach this stack to that network as shown in the `compose.yaml` comments and change the host in `DB_URL` to the corresponding service name.
+- For MySQL, uncomment the `DB_CONNECTION_INIT_SQL` line in `compose.yaml` (the timezone must match `APP_TIME_ZONE`).
+- The frontend defaults to `VITE_BASE_PATH=/new-api-stat/` and `VITE_API_BASE_URL=/newapi-stat-api/api`, matching the `location` prefixes in `frontend/nginx.conf`; to deploy under another sub-path, update both the compose `VITE_BASE_PATH` and `frontend/nginx.conf` accordingly.
+- Put real credentials only in `.env` (ignored by .gitignore) or in platform Secrets — never commit them.
 
 ## Security Notes
 
