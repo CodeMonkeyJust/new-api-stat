@@ -44,7 +44,7 @@ frontend/  Фронтенд на Vue
 
 ### 1. Подготовка базы данных
 
-Проект напрямую читает таблицы `logs` и `users` из new-api для статистики только на чтение. Поддерживаются PostgreSQL и MySQL; переключение выполняется через `DB_URL` (по умолчанию PostgreSQL). Сначала убедитесь, что учётная запись базы данных имеет права только на чтение, и проверьте совместимость SQL и версий полей в тестовой среде.
+Проект напрямую читает таблицы `logs` и `users` из new-api для статистики только на чтение. Поддерживаются PostgreSQL и MySQL; переключение выполняется через `DB_URL`. Все примеры ниже используют MySQL. Сначала убедитесь, что учётная запись базы данных имеет права только на чтение, и проверьте совместимость SQL и версий полей в тестовой среде.
 
 `db/MySQL.sql` — справочный файл со структурой таблиц целевого экземпляра MySQL для new-api, поясняющий структуру базы данных new-api (проект в основном читает таблицы `logs` и `users`). Актуальность проверена для new-api **v1.0.0-rc.32**. Файл предназначен только для чтения/справки и не является скриптом миграции; не выполняйте его на любой базе данных и не перезаписывайте существующие таблицы.
 
@@ -55,13 +55,13 @@ frontend/  Фронтенд на Vue
 ```bash
 cd backend
 mvn clean package -DskipTests
-java -jar target/newapi-stat-api-1.0.0.jar
+java -jar target/new-api-stat-api-1.0.0.jar
 ```
 
-По умолчанию бэкенд слушает `http://localhost:8082` с путём контекста `/newapi-stat-api`. Перед первым запуском необходимо задать `DB_USERNAME` и `DB_PASSWORD`; приложение никогда не создаёт и не изменяет таблицы new-api. Swagger UI и OpenAPI JSON по умолчанию отключены; для разработки и отладки установите `SWAGGER_ENABLED=true`. Документация API:
+По умолчанию бэкенд слушает `http://localhost:8082` с путём контекста `/new-api-stat-api`. Перед первым запуском необходимо задать `DB_USERNAME` и `DB_PASSWORD`; приложение никогда не создаёт и не изменяет таблицы new-api. Swagger UI и OpenAPI JSON по умолчанию отключены; для разработки и отладки установите `SWAGGER_ENABLED=true`. Документация API:
 
-- Swagger UI: `http://localhost:8082/newapi-stat-api/swagger-ui.html`
-- OpenAPI JSON: `http://localhost:8082/newapi-stat-api/v3/api-docs`
+- Swagger UI: `http://localhost:8082/new-api-stat-api/swagger-ui.html`
+- OpenAPI JSON: `http://localhost:8082/new-api-stat-api/v3/api-docs`
 
 ### 3. Запуск фронтенда
 
@@ -88,20 +88,22 @@ npm run dev
 npm run build
 ```
 
-Результаты сборки находятся в `frontend/dist/`, а путь страницы по умолчанию — `/new-api-stat/` (например, `https://<ваш-домен>/new-api-stat/`). Сопоставьте `/new-api-stat/` с `frontend/dist/` и настройте обратный прокси с `/newapi-stat-api` на бэкенд. Чтобы развернуть приложение в корне или по другому пути, задайте `VITE_BASE_PATH` перед сборкой (например, `VITE_BASE_PATH=/` или `VITE_BASE_PATH=/stat/`).
+Результаты сборки находятся в `frontend/new-api-stat/`, а путь страницы по умолчанию — `/new-api-stat/` (например, `https://<ваш-домен>/new-api-stat/`). Сопоставьте `/new-api-stat/` с `frontend/new-api-stat/` и настройте обратный прокси с `/new-api-stat-api` на бэкенд. Чтобы развернуть приложение в корне или по другому пути, задайте `VITE_BASE_PATH` перед сборкой (например, `VITE_BASE_PATH=/` или `VITE_BASE_PATH=/stat/`).
 
 ## Конфигурация
 
 Бэкенд отдаёт приоритет переменным окружения, чтобы не попадать учётными данными базы данных в Git:
 
+> Примечание: при развёртывании задавайте переменные окружения базы данных явно; если `DB_URL` не задан, приложение использует локальное подключение PostgreSQL. Все примеры в этом документе (включая примеры значений MySQL в таблице ниже) используют MySQL.
+
 | Переменная окружения | Значение по умолчанию | Описание |
 | --- | --- | --- |
-| `DB_URL` | `jdbc:postgresql://localhost:5432/new-api` | JDBC-адрес; подходят и PostgreSQL, и MySQL (например, `jdbc:mysql://host:3306/new_api?...`). Драйвер и диалект определяются автоматически по URL |
+| `DB_URL` | `jdbc:mysql://db.example.com:3306/new_api?...` | JDBC-адрес; подходят и PostgreSQL, и MySQL. Драйвер и диалект определяются автоматически по URL |
 | `DB_USERNAME` | нет | Имя пользователя базы данных; должно быть задано явно. Рекомендуется учётная запись только для чтения |
 | `DB_PASSWORD` | нет | Пароль базы данных; должен быть задан явно |
-| `DB_CONNECTION_INIT_SQL` | выражение часового пояса PostgreSQL | Инициализирующий SQL, выполняемый после установления каждого соединения; используется для единообразного часового пояса при подсчёте статистики по `created_at` (секунды epoch). Для MySQL укажите фиксированное смещение, соответствующее `APP_TIME_ZONE`, например `SET time_zone = '+08:00'` |
+| `DB_CONNECTION_INIT_SQL` | `SET time_zone = '+08:00'` | Инициализирующий SQL, выполняемый после установления каждого соединения, для единообразного часового пояса статистики по `created_at` (секунды epoch). Для MySQL укажите фиксированное смещение, соответствующее `APP_TIME_ZONE`; в PostgreSQL синтаксис другой (`SET TIME ZONE '<APP_TIME_ZONE>'`). Задайте его в зависимости от используемой БД |
 | `SERVER_PORT` | `8082` | Порт сервера |
-| `SERVER_CONTEXT_PATH` | `/newapi-stat-api` | Путь контекста сервера |
+| `SERVER_CONTEXT_PATH` | `/new-api-stat-api` | Путь контекста сервера |
 | `APP_TIME_ZONE` | `Asia/Shanghai` | Часовой пояс для дат и часов статистики |
 | `APP_ANALYTICS_ROLES` | `10,100` | Значения ролей new-api, которым разрешён доступ к API статистики; по умолчанию администратор/корневой пользователь |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:3001,http://localhost:5173` | Разрешённые источники фронтенда через запятую |
@@ -109,19 +111,7 @@ npm run build
 | `SESSION_COOKIE_SAME_SITE` | `lax` | Атрибут SameSite для cookie сессии |
 | `SWAGGER_ENABLED` | `false` | Включать ли Swagger/OpenAPI |
 
-Пример:
-
-```bash
-export DB_URL='jdbc:postgresql://db.example.com:5432/new-api'
-export DB_USERNAME='newapi_stat_readonly'
-export DB_PASSWORD='replace-with-a-secret'
-export APP_TIME_ZONE='Asia/Shanghai'
-export CORS_ALLOWED_ORIGINS='https://stat.example.com'
-export SESSION_COOKIE_SECURE='true'
-export SWAGGER_ENABLED='false'
-```
-
-Пример для MySQL (обратите внимание: синтаксис `DB_CONNECTION_INIT_SQL` отличается от PostgreSQL):
+Пример (MySQL):
 
 ```bash
 export DB_URL='jdbc:mysql://db.example.com:3306/new_api?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true'
@@ -149,27 +139,16 @@ export SWAGGER_ENABLED='false'
 ```bash
 cd backend
 mvn clean package -DskipTests
-copy target\newapi-stat-api-1.0.0.jar app.jar  # в Windows PowerShell можно использовать Copy-Item
-# Linux/macOS: cp target/newapi-stat-api-1.0.0.jar app.jar
-docker build -t newapi-stat-api .
-docker run --rm -p 8082:8082 \
-  -e DB_URL='jdbc:postgresql://host.docker.internal:5432/new-api' \
-  -e DB_USERNAME='newapi_stat_readonly' \
-  -e DB_PASSWORD='replace-with-a-secret' \
-  --name newapi-stat-api \
-  newapi-stat-api
-```
-
-Пример для MySQL:
-
-```bash
-docker run --rm -p 8082:8082 \
+copy target\new-api-stat-api-1.0.0.jar app.jar  # в Windows PowerShell можно использовать Copy-Item
+# Linux/macOS: cp target/new-api-stat-api-1.0.0.jar app.jar
+docker build -t new-api-stat-api .
+docker run -d --restart unless-stopped -p 8082:8082 \
   -e DB_URL='jdbc:mysql://host.docker.internal:3306/new_api?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true' \
   -e DB_USERNAME='newapi_stat_readonly' \
   -e DB_PASSWORD='replace-with-a-secret' \
   -e DB_CONNECTION_INIT_SQL="SET time_zone = '+08:00'" \
-  --name newapi-stat-api \
-  newapi-stat-api
+  --name new-api-stat-api \
+  new-api-stat-api
 ```
 
 Не коммитьте реальные пароли, внутренние IP-адреса или `app.jar`. В production передавайте учётные данные через Secrets, переменные окружения или конфигурацию платформы.
@@ -192,11 +171,11 @@ Copy-Item .env.example .env
 docker compose up -d --build
 ```
 
-3. Откройте `http://<хост>:8080/new-api-stat/` (порт на хосте меняется через `WEB_PORT` в `.env`). nginx проксирует `/newapi-stat-api` на контейнер бэкенда: страница и API находятся в одном источнике, дополнительная настройка CORS не нужна; остановка — `docker compose down`.
+3. Откройте `http://<хост>:8080/new-api-stat/` (порт на хосте меняется через `WEB_PORT` в `.env`). nginx проксирует `/new-api-stat-api` на контейнер бэкенда: страница и API находятся в одном источнике, дополнительная настройка CORS не нужна; остановка — `docker compose down`.
 
-- Пример по умолчанию обращается к базе new-api на хосте через `host.docker.internal` (в Linux compose автоматически добавляет сопоставление `host-gateway`). Если база работает в другой Docker-сети, подключите этот стек к ней, как показано в комментариях `compose.yaml`, и замените хост в `DB_URL` на имя соответствующего сервиса.
-- Для MySQL раскомментируйте строку `DB_CONNECTION_INIT_SQL` в `compose.yaml` (часовой пояс должен соответствовать `APP_TIME_ZONE`).
-- Фронтенд по умолчанию использует `VITE_BASE_PATH=/new-api-stat/` и `VITE_API_BASE_URL=/newapi-stat-api/api`, что соответствует префиксам `location` в `frontend/nginx.conf`; для другого подпути измените и `VITE_BASE_PATH` в compose, и `frontend/nginx.conf`.
+- Примеры используют MySQL и обращаются к базе new-api на хосте через `host.docker.internal` (в Linux compose автоматически добавляет сопоставление `host-gateway`). Если база работает в другой Docker-сети, подключите этот стек к ней, как показано в комментариях `compose.yaml`, и замените хост в `DB_URL` на имя соответствующего сервиса.
+- `compose.yaml` по умолчанию задаёт инициализирующий SQL подключения для MySQL (`SET time_zone = '+08:00'`, соответствует значению по умолчанию `APP_TIME_ZONE=Asia/Shanghai`); чтобы изменить часовой пояс или перейти на PostgreSQL, переопределите `DB_CONNECTION_INIT_SQL` в `.env` (пример синтаксиса PostgreSQL: `SET TIME ZONE 'Asia/Shanghai'`).
+- Фронтенд по умолчанию использует `VITE_BASE_PATH=/new-api-stat/` и `VITE_API_BASE_URL=/new-api-stat-api/api`, что соответствует префиксам `location` в `frontend/nginx.conf`; для другого подпути измените и `VITE_BASE_PATH` в compose, и `frontend/nginx.conf`.
 - Реальные учётные данные указывайте только в `.env` (игнорируется .gitignore) или в Secrets платформы — не коммитьте их.
 
 ## Примечания по безопасности

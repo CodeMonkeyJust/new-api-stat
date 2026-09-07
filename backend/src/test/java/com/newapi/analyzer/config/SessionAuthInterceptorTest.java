@@ -29,16 +29,16 @@ class SessionAuthInterceptorTest {
     @NonNull
     private MockHttpServletRequest requestWithApiPath() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setContextPath("/newapi-stat-api");
-        request.setRequestURI("/newapi-stat-api/api/analyzer/summary");
+        request.setContextPath("/new-api-stat-api");
+        request.setRequestURI("/new-api-stat-api/api/analyzer/summary");
         return request;
     }
 
     @NonNull
     private MockHttpServletRequest requestWithPersonalPath() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setContextPath("/newapi-stat-api");
-        request.setRequestURI("/newapi-stat-api/api/analyzer/personal/stats");
+        request.setContextPath("/new-api-stat-api");
+        request.setRequestURI("/new-api-stat-api/api/analyzer/personal/stats");
         return request;
     }
 

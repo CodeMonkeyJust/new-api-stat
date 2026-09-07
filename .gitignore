@@ -9,6 +9,7 @@ target/
 # Node.js
 node_modules/
 dist/
+new-api-stat/
 dist-ssr/
 *.local
 .env

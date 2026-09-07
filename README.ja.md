@@ -44,7 +44,7 @@ frontend/  Vue フロントエンド
 
 ### 1. データベースの準備
 
-本プロジェクトは new-api の `logs` テーブルと `users` テーブルを読み取り専用で直接参照し、統計を取得します。PostgreSQL と MySQL の両方に対応しており、`DB_URL` で切り替えます（デフォルトは PostgreSQL）。まずデータベースアカウントに読み取り専用のクエリ権限があることを確認し、テスト環境で SQL とフィールドのバージョン互換性を検証してください。
+本プロジェクトは new-api の `logs` テーブルと `users` テーブルを読み取り専用で直接参照し、統計を取得します。PostgreSQL と MySQL の両方に対応しており、`DB_URL` で切り替えます。以下の例はすべて MySQL です。まずデータベースアカウントに読み取り専用のクエリ権限があることを確認し、テスト環境で SQL とフィールドのバージョン互換性を検証してください。
 
 `db/MySQL.sql` は、対象となる new-api MySQL インスタンスのテーブル構造を説明するための参考ファイルです（本プロジェクトは主に `logs` と `users` の 2 テーブルを読み取ります）。現在は new-api **v1.0.0-rc.32** のテーブル構造で検証しています。このファイルは読み取り・参考専用であり、マイグレーションスクリプトではありません。いかなるデータベースに対しても実行せず、既存のテーブルを上書きしないでください。
 
@@ -55,13 +55,13 @@ frontend/  Vue フロントエンド
 ```bash
 cd backend
 mvn clean package -DskipTests
-java -jar target/newapi-stat-api-1.0.0.jar
+java -jar target/new-api-stat-api-1.0.0.jar
 ```
 
-バックエンドはデフォルトで `http://localhost:8082` をリッスンし、コンテキストパスは `/newapi-stat-api` です。初回起動前に `DB_USERNAME` と `DB_PASSWORD` の設定が必須です。アプリケーションは new-api のテーブル構造を作成・変更しません。Swagger UI と OpenAPI JSON はデフォルトで無効です。開発・デバッグ時は `SWAGGER_ENABLED=true` を設定してください。API ドキュメント：
+バックエンドはデフォルトで `http://localhost:8082` をリッスンし、コンテキストパスは `/new-api-stat-api` です。初回起動前に `DB_USERNAME` と `DB_PASSWORD` の設定が必須です。アプリケーションは new-api のテーブル構造を作成・変更しません。Swagger UI と OpenAPI JSON はデフォルトで無効です。開発・デバッグ時は `SWAGGER_ENABLED=true` を設定してください。API ドキュメント：
 
-- Swagger UI：`http://localhost:8082/newapi-stat-api/swagger-ui.html`
-- OpenAPI JSON：`http://localhost:8082/newapi-stat-api/v3/api-docs`
+- Swagger UI：`http://localhost:8082/new-api-stat-api/swagger-ui.html`
+- OpenAPI JSON：`http://localhost:8082/new-api-stat-api/v3/api-docs`
 
 ### 3. フロントエンドの起動
 
@@ -88,20 +88,22 @@ npm run dev
 npm run build
 ```
 
-ビルド成果物は `frontend/dist/` に出力され、ページのパスはデフォルトで `/new-api-stat/` です（例：`https://<ドメイン>/new-api-stat/`）。`/new-api-stat/` を `frontend/dist/` にマッピングしてホストし、`/newapi-stat-api` をバックエンドへリバースプロキシしてください。ルートや別のパスにデプロイする場合は、ビルド前に `VITE_BASE_PATH` を設定してください（例：`VITE_BASE_PATH=/` または `VITE_BASE_PATH=/stat/`）。
+ビルド成果物は `frontend/new-api-stat/` に出力され、ページのパスはデフォルトで `/new-api-stat/` です（例：`https://<ドメイン>/new-api-stat/`）。`/new-api-stat/` を `frontend/new-api-stat/` にマッピングしてホストし、`/new-api-stat-api` をバックエンドへリバースプロキシしてください。ルートや別のパスにデプロイする場合は、ビルド前に `VITE_BASE_PATH` を設定してください（例：`VITE_BASE_PATH=/` または `VITE_BASE_PATH=/stat/`）。
 
 ## 設定
 
 バックエンドは、データベース認証情報を Git にコミットしないよう、環境変数を優先して設定を読み込みます：
 
+> 補足：デプロイ時はデータベース関連の環境変数を明示的に設定してください。`DB_URL` 未設定時はアプリがローカルの PostgreSQL 接続にフォールバックします。この文書内の例（下の表の MySQL サンプル値も含む）はすべて MySQL を使用しています。
+
 | 環境変数 | デフォルト値 | 説明 |
 | --- | --- | --- |
-| `DB_URL` | `jdbc:postgresql://localhost:5432/new-api` | JDBC アドレス。PostgreSQL / MySQL のどちらでも可（例：`jdbc:mysql://host:3306/new_api?...`）。ドライバと方言は URL から自動判定 |
+| `DB_URL` | `jdbc:mysql://db.example.com:3306/new_api?...` | JDBC アドレス。PostgreSQL / MySQL のどちらでも可。ドライバと方言は URL から自動判定 |
 | `DB_USERNAME` | なし | データベースのユーザー名。明示的な設定が必須。読み取り専用アカウントを推奨 |
 | `DB_PASSWORD` | なし | データベースのパスワード。明示的な設定が必須 |
-| `DB_CONNECTION_INIT_SQL` | PostgreSQL のタイムゾーン文 | 各接続確立後に実行する初期化 SQL。`created_at`（epoch 秒）統計のタイムゾーンを統一するために使用。MySQL の場合は `APP_TIME_ZONE` に対応する固定オフセット（例：`SET time_zone = '+08:00'`）に変更 |
+| `DB_CONNECTION_INIT_SQL` | `SET time_zone = '+08:00'` | 各接続確立後に実行する初期化 SQL。`created_at`（epoch 秒）統計のタイムゾーンを統一するためのもので、MySQL では `APP_TIME_ZONE` に対応する固定オフセットが必要です。PostgreSQL は構文が異なります（`SET TIME ZONE '<APP_TIME_ZONE>'`）。使用する DB に合わせて設定してください |
 | `SERVER_PORT` | `8082` | サーバーポート |
-| `SERVER_CONTEXT_PATH` | `/newapi-stat-api` | サーバーのコンテキストパス |
+| `SERVER_CONTEXT_PATH` | `/new-api-stat-api` | サーバーのコンテキストパス |
 | `APP_TIME_ZONE` | `Asia/Shanghai` | 統計の日付と時間に使用するタイムゾーン |
 | `APP_ANALYTICS_ROLES` | `10,100` | 統計 API へのアクセスを許可する new-api のロール値。デフォルトは管理者 / ルートユーザー |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:3001,http://localhost:5173` | 許可するフロントエンドのオリジン（カンマ区切り） |
@@ -109,19 +111,7 @@ npm run build
 | `SESSION_COOKIE_SAME_SITE` | `lax` | セッション Cookie の SameSite 属性 |
 | `SWAGGER_ENABLED` | `false` | Swagger/OpenAPI を有効にするかどうか |
 
-例：
-
-```bash
-export DB_URL='jdbc:postgresql://db.example.com:5432/new-api'
-export DB_USERNAME='newapi_stat_readonly'
-export DB_PASSWORD='replace-with-a-secret'
-export APP_TIME_ZONE='Asia/Shanghai'
-export CORS_ALLOWED_ORIGINS='https://stat.example.com'
-export SESSION_COOKIE_SECURE='true'
-export SWAGGER_ENABLED='false'
-```
-
-MySQL の例（`DB_CONNECTION_INIT_SQL` の構文は PostgreSQL と異なる点に注意）：
+例（MySQL）：
 
 ```bash
 export DB_URL='jdbc:mysql://db.example.com:3306/new_api?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true'
@@ -149,27 +139,16 @@ export SWAGGER_ENABLED='false'
 ```bash
 cd backend
 mvn clean package -DskipTests
-copy target\newapi-stat-api-1.0.0.jar app.jar  # Windows PowerShell では Copy-Item を使用可
-# Linux/macOS: cp target/newapi-stat-api-1.0.0.jar app.jar
-docker build -t newapi-stat-api .
-docker run --rm -p 8082:8082 \
-  -e DB_URL='jdbc:postgresql://host.docker.internal:5432/new-api' \
-  -e DB_USERNAME='newapi_stat_readonly' \
-  -e DB_PASSWORD='replace-with-a-secret' \
-  --name newapi-stat-api \
-  newapi-stat-api
-```
-
-MySQL の例：
-
-```bash
-docker run --rm -p 8082:8082 \
+copy target\new-api-stat-api-1.0.0.jar app.jar  # Windows PowerShell では Copy-Item を使用可
+# Linux/macOS: cp target/new-api-stat-api-1.0.0.jar app.jar
+docker build -t new-api-stat-api .
+docker run -d --restart unless-stopped -p 8082:8082 \
   -e DB_URL='jdbc:mysql://host.docker.internal:3306/new_api?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true' \
   -e DB_USERNAME='newapi_stat_readonly' \
   -e DB_PASSWORD='replace-with-a-secret' \
   -e DB_CONNECTION_INIT_SQL="SET time_zone = '+08:00'" \
-  --name newapi-stat-api \
-  newapi-stat-api
+  --name new-api-stat-api \
+  new-api-stat-api
 ```
 
 実際のパスワード、社内 IP、`app.jar` をリポジトリにコミットしないでください。本番環境では Secret、環境変数、プラットフォーム設定経由で認証情報を注入してください。
@@ -192,11 +171,11 @@ Linux/macOS の場合：`cp .env.example .env`
 docker compose up -d --build
 ```
 
-3. `http://<ホスト>:8080/new-api-stat/` を開きます（ホスト側ポートは `.env` の `WEB_PORT` で変更）。nginx が `/newapi-stat-api` をバックエンドコンテナへリバースプロキシするため、ページと API は同一オリジンとなり追加の CORS 設定は不要です。停止は `docker compose down`。
+3. `http://<ホスト>:8080/new-api-stat/` を開きます（ホスト側ポートは `.env` の `WEB_PORT` で変更）。nginx が `/new-api-stat-api` をバックエンドコンテナへリバースプロキシするため、ページと API は同一オリジンとなり追加の CORS 設定は不要です。停止は `docker compose down`。
 
-- デフォルト例では `host.docker.internal` 経由でホスト上の new-api データベースへ接続します（Linux では compose が自動的に `host-gateway` マッピングを追加）。データベースが別の Docker ネットワークにある場合は、`compose.yaml` 末尾のコメントに従ってこのスタックをそのネットワークへ接続し、`DB_URL` のホスト名を対応するサービス名に変更してください。
-- MySQL を使う場合は `compose.yaml` の `DB_CONNECTION_INIT_SQL` 行のコメントを外してください（タイムゾーンは `APP_TIME_ZONE` と一致させること）。
-- フロントエンドは既定で `VITE_BASE_PATH=/new-api-stat/`、`VITE_API_BASE_URL=/newapi-stat-api/api` で、`frontend/nginx.conf` の location プレフィックスと対応しています。別のサブパスへデプロイする場合は compose の `VITE_BASE_PATH` と `frontend/nginx.conf` を合わせて変更してください。
+- 例はすべて MySQL で、`host.docker.internal` 経由でホスト上の new-api データベースへ接続します（Linux では compose が自動的に `host-gateway` マッピングを追加）。データベースが別の Docker ネットワークにある場合は、`compose.yaml` 末尾のコメントに従ってこのスタックをそのネットワークへ接続し、`DB_URL` のホスト名を対応するサービス名に変更してください。
+- `compose.yaml` は既定で MySQL 用の接続初期化 SQL（`SET time_zone = '+08:00'`。既定の `APP_TIME_ZONE=Asia/Shanghai` に対応）を提供します。タイムゾーンを調整する場合や PostgreSQL に切り替える場合は、`.env` で `DB_CONNECTION_INIT_SQL` を上書きしてください（PostgreSQL の構文例：`SET TIME ZONE 'Asia/Shanghai'`）。
+- フロントエンドは既定で `VITE_BASE_PATH=/new-api-stat/`、`VITE_API_BASE_URL=/new-api-stat-api/api` で、`frontend/nginx.conf` の location プレフィックスと対応しています。別のサブパスへデプロイする場合は compose の `VITE_BASE_PATH` と `frontend/nginx.conf` を合わせて変更してください。
 - 実際の認証情報は `.env`（.gitignore で無視）またはプラットフォームの Secret にのみ置き、コミットしないでください。
 
 ## セキュリティ上の注意

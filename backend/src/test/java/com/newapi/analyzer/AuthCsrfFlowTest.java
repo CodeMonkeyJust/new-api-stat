@@ -26,7 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * 模拟浏览器 + axios 的 CSRF 流程：
  * 1) GET /api/auth/csrf 写入 XSRF-TOKEN Cookie。Cookie Path 必须为 "/"：前端 SPA 页面位于 "/"
- *    （Vite 开发服务器 / 反向代理部署），若 Path 是上下文路径 /newapi-stat-api，浏览器不会把该
+ *    （Vite 开发服务器 / 反向代理部署），若 Path 是上下文路径 /new-api-stat-api，浏览器不会把该
  *    Cookie 暴露给 document.cookie，axios 将读不到 token 而无法附带请求头；
  * 2) 后续写操作（登录）必须携带 X-XSRF-TOKEN 头，否则应被 Spring Security 拒绝(403)。
  * 该测试经过真实的 SecurityFilterChain，可验证 CookieCsrfTokenRepository 配置是否与

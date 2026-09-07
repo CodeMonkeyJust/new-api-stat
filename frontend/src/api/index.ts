@@ -4,7 +4,7 @@ import i18n from '@/i18n'
 import { translateServerMessage } from '@/i18n/serverMessages'
 
 const request = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/newapi-stat-api/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/new-api-stat-api/api',
   timeout: 30000,
   maxContentLength: 10 * 1024 * 1024,
   maxBodyLength: 1 * 1024 * 1024,

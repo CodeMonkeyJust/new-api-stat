@@ -10,8 +10,8 @@
 # 说明：
 #   - backend  由 backend/Dockerfile.compose 多阶段构建（Maven 打包 -> JRE 运行），
 #     构建机无需安装 JDK/Maven；frontend 由 frontend/Dockerfile 构建（Node 打包 -> nginx）。
-#   - 前端 nginx 把 /newapi-stat-api 反向代理到 backend 容器，默认与前端
-#     VITE_BASE_PATH=/new-api-stat/、VITE_API_BASE_URL=/newapi-stat-api/api 对应。
+#   - 前端 nginx 把 /new-api-stat-api 反向代理到 backend 容器，默认与前端
+#     VITE_BASE_PATH=/new-api-stat/、VITE_API_BASE_URL=/new-api-stat-api/api 对应。
 #   - 若 new-api 数据库运行在其它 Docker 网络中，可把本 compose 挂到该网络
 #     （见下方 networks 注释），并把 .env 中 DB_URL 主机名改为对应服务名。
 # =============================================================================
@@ -25,18 +25,20 @@ services:
     container_name: new-api-stat-backend
     restart: unless-stopped
     environment:
-      # 必填：new-api 数据库连接（只读账号即可）
+      # 必填：new-api 数据库连接（只读账号即可），示例见 .env.example（默认以 MySQL 为例）
       DB_URL: ${DB_URL:?请在 .env 中设置 DB_URL（参考 .env.example）}
       DB_USERNAME: ${DB_USERNAME:?请在 .env 中设置 DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD:?请在 .env 中设置 DB_PASSWORD}
-      # PostgreSQL 默认无需设置：application.yml 已内置 SET TIME ZONE '<APP_TIME_ZONE>'。
-      # 使用 MySQL 时取消下面注释（时区需与 APP_TIME_ZONE 对应的固定偏移）：
-      # DB_CONNECTION_INIT_SQL: "SET time_zone = '+08:00'"
+      # 连接建立后执行的初始化 SQL，用于统一统计时区。示例默认使用 MySQL，
+      # 此处默认值与 .env.example 的 MySQL 示例一致（Asia/Shanghai 对应 '+08:00'）。
+      # 如需调整 APP_TIME_ZONE，或改用 PostgreSQL（语法示例：SET TIME ZONE 'Asia/Shanghai'），
+      # 请在 .env 中设置 DB_CONNECTION_INIT_SQL 覆盖本默认值。
+      DB_CONNECTION_INIT_SQL: "${DB_CONNECTION_INIT_SQL:-SET time_zone = '+08:00'}"
       APP_TIME_ZONE: ${APP_TIME_ZONE:-Asia/Shanghai}
       APP_ANALYTICS_ROLES: ${APP_ANALYTICS_ROLES:-10,100}
       SERVER_PORT: 8082
-      SERVER_CONTEXT_PATH: ${SERVER_CONTEXT_PATH:-/newapi-stat-api}
-      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3001,http://localhost:5173}
+      SERVER_CONTEXT_PATH: ${SERVER_CONTEXT_PATH:-/new-api-stat-api}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-*}
       SESSION_TIMEOUT: ${SESSION_TIMEOUT:-30m}
       SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
       SESSION_COOKIE_SAME_SITE: ${SESSION_COOKIE_SAME_SITE:-lax}
@@ -55,7 +57,7 @@ services:
       args:
         # 若修改，请同步修改 frontend/nginx.conf 中的 location 前缀
         VITE_BASE_PATH: ${VITE_BASE_PATH:-/new-api-stat/}
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/newapi-stat-api/api}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/new-api-stat-api/api}
     container_name: new-api-stat-web
     restart: unless-stopped
     ports:

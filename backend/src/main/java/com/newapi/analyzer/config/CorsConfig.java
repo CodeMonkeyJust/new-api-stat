@@ -15,10 +15,10 @@ public class CorsConfig {
 
     @Bean
     public CorsFilter corsFilter(
-            @Value("${app.cors.allowed-origins:http://localhost:3001,http://localhost:5173}") String allowedOrigins) {
+            @Value("${app.cors.allowed-origins:*}") String allowedOrigins) {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOrigins(Arrays.stream(allowedOrigins.split(","))
+        config.setAllowedOriginPatterns(Arrays.stream(allowedOrigins.split(","))
                 .map(origin -> origin.trim())
                 .filter(origin -> !origin.isEmpty())
                 .toList());

@@ -2,6 +2,7 @@
 # 注意：Dockerfile 与 nginx.conf 必须保留在上下文中（COPY 指令需要读取它们）
 node_modules
 dist
+new-api-stat
 .env
 .env.*
 !.env.example

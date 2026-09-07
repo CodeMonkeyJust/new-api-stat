@@ -44,7 +44,7 @@ frontend/  Vue 前端
 
 ### 1. 准备数据库
 
-本项目直接读取 new-api 的 `logs` 和 `users` 表做只读统计，数据库支持 PostgreSQL 与 MySQL，通过 `DB_URL` 切换（默认 PostgreSQL）。请先确认数据库账号具备只读查询权限，并在测试环境验证 SQL 和字段版本兼容性。
+本项目直接读取 new-api 的 `logs` 和 `users` 表做只读统计，数据库支持 PostgreSQL 与 MySQL，通过 `DB_URL` 切换，以下示例均以 MySQL 为例。请先确认数据库账号具备只读查询权限，并在测试环境验证 SQL 和字段版本兼容性。
 
 `db/MySQL.sql` 是目标 new-api MySQL 实例的库表结构参考文件，用于说明 new-api 的数据库结构（本项目主要读取其中的 `logs`、`users` 两张表）。目前按 new-api **v1.0.0-rc.32** 的表结构验证。该文件仅供阅读参考，不是迁移脚本，请勿对任何数据库执行或覆盖已有库表。
 
@@ -55,13 +55,13 @@ frontend/  Vue 前端
 ```bash
 cd backend
 mvn clean package -DskipTests
-java -jar target/newapi-stat-api-1.0.0.jar
+java -jar target/new-api-stat-api-1.0.0.jar
 ```
 
-后端默认监听 `http://localhost:8082`，上下文路径为 `/newapi-stat-api`。首次启动前必须设置 `DB_USERNAME` 和 `DB_PASSWORD`；应用不会创建或修改 new-api 表结构。Swagger UI 和 OpenAPI JSON 默认关闭，如需开发调试请设置 `SWAGGER_ENABLED=true`。API 文档：
+后端默认监听 `http://localhost:8082`，上下文路径为 `/new-api-stat-api`。首次启动前必须设置 `DB_USERNAME` 和 `DB_PASSWORD`；应用不会创建或修改 new-api 表结构。Swagger UI 和 OpenAPI JSON 默认关闭，如需开发调试请设置 `SWAGGER_ENABLED=true`。API 文档：
 
-- Swagger UI：`http://localhost:8082/newapi-stat-api/swagger-ui.html`
-- OpenAPI JSON：`http://localhost:8082/newapi-stat-api/v3/api-docs`
+- Swagger UI：`http://localhost:8082/new-api-stat-api/swagger-ui.html`
+- OpenAPI JSON：`http://localhost:8082/new-api-stat-api/v3/api-docs`
 
 ### 3. 启动前端
 
@@ -88,20 +88,22 @@ npm run dev
 npm run build
 ```
 
-构建产物位于 `frontend/dist/`，默认页面路径为 `/new-api-stat/`（如 `https://<域名>/new-api-stat/`）。请将 `/new-api-stat/` 映射到 `frontend/dist/` 进行托管，并将 `/newapi-stat-api` 反向代理到后端。如需部署到根路径或其他子路径，请在构建前设置 `VITE_BASE_PATH`（如 `VITE_BASE_PATH=/` 或 `VITE_BASE_PATH=/stat/`）。
+构建产物位于 `frontend/new-api-stat/`，默认页面路径为 `/new-api-stat/`（如 `https://<域名>/new-api-stat/`）。请将 `/new-api-stat/` 映射到 `frontend/new-api-stat/` 进行托管，并将 `/new-api-stat-api` 反向代理到后端。如需部署到根路径或其他子路径，请在构建前设置 `VITE_BASE_PATH`（如 `VITE_BASE_PATH=/` 或 `VITE_BASE_PATH=/stat/`）。
 
 ## 配置
 
 后端配置优先使用环境变量，避免将数据库凭据提交到 Git：
 
+> 说明：部署时请显式设置数据库相关环境变量；未设置 `DB_URL` 时应用内置回退为 PostgreSQL 本地连接。本文所有示例（含下表中 MySQL 示例值）均以 MySQL 为例。
+
 | 环境变量 | 默认值 | 说明 |
 | --- | --- | --- |
-| `DB_URL` | `jdbc:postgresql://localhost:5432/new-api` | JDBC 地址，PostgreSQL 或 MySQL 均可（如 `jdbc:mysql://host:3306/new_api?...`），驱动与方言按 URL 自动探测 |
+| `DB_URL` | `jdbc:mysql://db.example.com:3306/new_api?...` | JDBC 地址，PostgreSQL 与 MySQL 均可，驱动与方言按 URL 自动探测 |
 | `DB_USERNAME` | 无默认值 | 数据库用户名，必须显式配置，建议使用只读账号 |
 | `DB_PASSWORD` | 无默认值 | 数据库密码，必须显式配置 |
-| `DB_CONNECTION_INIT_SQL` | PostgreSQL 时区语句 | 每个连接建立后执行的初始化 SQL，用于统一 `created_at`(epoch 秒) 统计时区；MySQL 需改为 `SET time_zone = '+08:00'` 等与 `APP_TIME_ZONE` 对应的固定偏移 |
+| `DB_CONNECTION_INIT_SQL` | `SET time_zone = '+08:00'` | 每个连接建立后执行的初始化 SQL，用于统一 `created_at`(epoch 秒) 统计时区；MySQL 需使用与 `APP_TIME_ZONE` 对应的固定偏移，PostgreSQL 语法不同（`SET TIME ZONE '<APP_TIME_ZONE>'`），请按所用数据库设置 |
 | `SERVER_PORT` | `8082` | 服务端口 |
-| `SERVER_CONTEXT_PATH` | `/newapi-stat-api` | 服务上下文路径 |
+| `SERVER_CONTEXT_PATH` | `/new-api-stat-api` | 服务上下文路径 |
 | `APP_TIME_ZONE` | `Asia/Shanghai` | 统计日期和小时使用的时区 |
 | `APP_ANALYTICS_ROLES` | `10,100` | 允许访问统计 API 的 new-api 角色值，默认管理员/根用户 |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:3001,http://localhost:5173` | 允许的前端来源，逗号分隔 |
@@ -109,19 +111,7 @@ npm run build
 | `SESSION_COOKIE_SAME_SITE` | `lax` | Session Cookie 的 SameSite 属性 |
 | `SWAGGER_ENABLED` | `false` | 是否启用 Swagger/OpenAPI |
 
-示例：
-
-```bash
-export DB_URL='jdbc:postgresql://db.example.com:5432/new-api'
-export DB_USERNAME='newapi_stat_readonly'
-export DB_PASSWORD='replace-with-a-secret'
-export APP_TIME_ZONE='Asia/Shanghai'
-export CORS_ALLOWED_ORIGINS='https://stat.example.com'
-export SESSION_COOKIE_SECURE='true'
-export SWAGGER_ENABLED='false'
-```
-
-MySQL 示例（注意 `DB_CONNECTION_INIT_SQL` 语法与 PostgreSQL 不同）：
+示例（以 MySQL 为例）：
 
 ```bash
 export DB_URL='jdbc:mysql://db.example.com:3306/new_api?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true'
@@ -149,27 +139,16 @@ export SWAGGER_ENABLED='false'
 ```bash
 cd backend
 mvn clean package -DskipTests
-copy target\newapi-stat-api-1.0.0.jar app.jar  # Windows PowerShell 可使用 Copy-Item
-# Linux/macOS: cp target/newapi-stat-api-1.0.0.jar app.jar
-docker build -t newapi-stat-api .
-docker run --rm -p 8082:8082 \
-  -e DB_URL='jdbc:postgresql://host.docker.internal:5432/new-api' \
-  -e DB_USERNAME='newapi_stat_readonly' \
-  -e DB_PASSWORD='replace-with-a-secret' \
-  --name newapi-stat-api \
-  newapi-stat-api
-```
-
-MySQL 示例：
-
-```bash
-docker run --rm -p 8082:8082 \
+copy target\new-api-stat-api-1.0.0.jar app.jar  # Windows PowerShell 可使用 Copy-Item
+# Linux/macOS: cp target/new-api-stat-api-1.0.0.jar app.jar
+docker build -t new-api-stat-api .
+docker run -d --restart unless-stopped -p 8082:8082 \
   -e DB_URL='jdbc:mysql://host.docker.internal:3306/new_api?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true' \
   -e DB_USERNAME='newapi_stat_readonly' \
   -e DB_PASSWORD='replace-with-a-secret' \
   -e DB_CONNECTION_INIT_SQL="SET time_zone = '+08:00'" \
-  --name newapi-stat-api \
-  newapi-stat-api
+  --name new-api-stat-api \
+  new-api-stat-api
 ```
 
 不要把真实密码、内网 IP 或 `app.jar` 提交到仓库。生产环境请通过 Secret、环境变量或平台配置注入凭据。
@@ -192,11 +171,11 @@ Linux/macOS 使用：`cp .env.example .env`
 docker compose up -d --build
 ```
 
-3. 访问 `http://<主机>:8080/new-api-stat/`（对外端口可用 `.env` 中的 `WEB_PORT` 修改）。nginx 已将 `/newapi-stat-api` 反向代理到后端容器，页面与 API 同源，无需额外 CORS 配置；停止服务用 `docker compose down`。
+3. 访问 `http://<主机>:8080/new-api-stat/`（对外端口可用 `.env` 中的 `WEB_PORT` 修改）。nginx 已将 `/new-api-stat-api` 反向代理到后端容器，页面与 API 同源，无需额外 CORS 配置；停止服务用 `docker compose down`。
 
-- 数据库默认示例通过 `host.docker.internal` 访问宿主机上的 new-api 数据库（Linux 下 compose 已自动添加 `host-gateway` 映射）。若数据库运行在其它 Docker 网络，请按 `compose.yaml` 末尾注释将本栈加入该网络，并把 `.env` 中 `DB_URL` 的主机名改为对应服务名。
-- 使用 MySQL 时，请取消 `compose.yaml` 中 `DB_CONNECTION_INIT_SQL` 一行的注释（时区需与 `APP_TIME_ZONE` 对应）。
-- 前端默认 `VITE_BASE_PATH=/new-api-stat/`、`VITE_API_BASE_URL=/newapi-stat-api/api`，与 `frontend/nginx.conf` 的 location 前缀对应；如需部署到其它子路径，请同步修改 compose 的 `VITE_BASE_PATH` 与 `frontend/nginx.conf`。
+- 示例以 MySQL 为例，通过 `host.docker.internal` 访问宿主机上的 new-api 数据库（Linux 下 compose 已自动添加 `host-gateway` 映射）。若数据库运行在其它 Docker 网络，请按 `compose.yaml` 末尾注释将本栈加入该网络，并把 `.env` 中 `DB_URL` 的主机名改为对应服务名。
+- `compose.yaml` 默认按 MySQL 提供连接初始化 SQL（`SET time_zone = '+08:00'`，与默认 `APP_TIME_ZONE=Asia/Shanghai` 对应）；如需调整时区或改用 PostgreSQL，请在 `.env` 中覆盖 `DB_CONNECTION_INIT_SQL`（PostgreSQL 语法示例：`SET TIME ZONE 'Asia/Shanghai'`）。
+- 前端默认 `VITE_BASE_PATH=/new-api-stat/`、`VITE_API_BASE_URL=/new-api-stat-api/api`，与 `frontend/nginx.conf` 的 location 前缀对应；如需部署到其它子路径，请同步修改 compose 的 `VITE_BASE_PATH` 与 `frontend/nginx.conf`。
 - 真实凭据只写入 `.env`（已被 .gitignore 忽略）或部署平台的 Secret，切勿提交到仓库。
 
 ## 安全说明

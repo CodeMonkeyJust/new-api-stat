@@ -13,7 +13,7 @@
     </parent>
 
     <groupId>com.newapi</groupId>
-    <artifactId>newapi-stat-api</artifactId>
+    <artifactId>new-api-stat-api</artifactId>
     <version>1.0.0</version>
     <name>NewAPI Analyzer</name>
     <description>NewAPI Token消耗分析工具</description>

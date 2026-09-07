@@ -12,10 +12,14 @@ export default defineConfig(({ mode }) => {
         '@': fileURLToPath(new URL('./src', import.meta.url))
       }
     },
+    build: {
+      outDir: 'new-api-stat',
+      emptyOutDir: true
+    },
     server: {
       port: Number(env.VITE_DEV_PORT || 3001),
       proxy: {
-        '/newapi-stat-api': {
+        '/new-api-stat-api': {
           target: env.VITE_API_PROXY_TARGET || 'http://localhost:8082',
           changeOrigin: true
         }

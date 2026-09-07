@@ -44,7 +44,7 @@ frontend/  Frontend Vue
 
 ### 1. Préparer la base de données
 
-Ce projet lit directement les tables `logs` et `users` de new-api pour des statistiques en lecture seule. PostgreSQL et MySQL sont pris en charge ; basculez via `DB_URL` (PostgreSQL par défaut). Assurez-vous d'abord que le compte de base de données dispose des droits de lecture seule, puis vérifiez la compatibilité du SQL et des versions de colonnes dans un environnement de test.
+Ce projet lit directement les tables `logs` et `users` de new-api pour des statistiques en lecture seule. PostgreSQL et MySQL sont pris en charge ; basculez via `DB_URL`. Tous les exemples ci-dessous utilisent MySQL. Assurez-vous d'abord que le compte de base de données dispose des droits de lecture seule, puis vérifiez la compatibilité du SQL et des versions de colonnes dans un environnement de test.
 
 `db/MySQL.sql` est un fichier de référence de la structure des tables de l'instance MySQL cible de new-api, servant à expliquer la structure de la base de données de new-api (ce projet lit principalement les tables `logs` et `users`). Il est actuellement vérifié avec new-api **v1.0.0-rc.32**. Ce fichier est fourni uniquement pour lecture/référence et n'est pas un script de migration ; ne l'exécutez sur aucune base de données et ne remplacez aucune table existante.
 
@@ -55,13 +55,13 @@ Prérequis : Java 17, Maven 3.9+. Le backend est basé sur Spring Boot 3.5 (voir
 ```bash
 cd backend
 mvn clean package -DskipTests
-java -jar target/newapi-stat-api-1.0.0.jar
+java -jar target/new-api-stat-api-1.0.0.jar
 ```
 
-Le backend écoute par défaut sur `http://localhost:8082`, avec le chemin de contexte `/newapi-stat-api`. `DB_USERNAME` et `DB_PASSWORD` doivent être définis avant le premier démarrage ; l'application ne crée ni ne modifie jamais les tables de new-api. Swagger UI et le JSON OpenAPI sont désactivés par défaut ; définissez `SWAGGER_ENABLED=true` pour le développement et le débogage. Documentation de l'API :
+Le backend écoute par défaut sur `http://localhost:8082`, avec le chemin de contexte `/new-api-stat-api`. `DB_USERNAME` et `DB_PASSWORD` doivent être définis avant le premier démarrage ; l'application ne crée ni ne modifie jamais les tables de new-api. Swagger UI et le JSON OpenAPI sont désactivés par défaut ; définissez `SWAGGER_ENABLED=true` pour le développement et le débogage. Documentation de l'API :
 
-- Swagger UI : `http://localhost:8082/newapi-stat-api/swagger-ui.html`
-- JSON OpenAPI : `http://localhost:8082/newapi-stat-api/v3/api-docs`
+- Swagger UI : `http://localhost:8082/new-api-stat-api/swagger-ui.html`
+- JSON OpenAPI : `http://localhost:8082/new-api-stat-api/v3/api-docs`
 
 ### 3. Démarrer le frontend
 
@@ -88,20 +88,22 @@ Compilation de production :
 npm run build
 ```
 
-Les artefacts de compilation se trouvent dans `frontend/dist/` et le chemin de la page est `/new-api-stat/` par défaut (par ex. `https://<votre-domaine>/new-api-stat/`). Faites correspondre `/new-api-stat/` à `frontend/dist/` et configurez un proxy inverse de `/newapi-stat-api` vers le backend. Pour déployer à la racine ou sous un autre chemin, définissez `VITE_BASE_PATH` avant la compilation (par ex. `VITE_BASE_PATH=/` ou `VITE_BASE_PATH=/stat/`).
+Les artefacts de compilation se trouvent dans `frontend/new-api-stat/` et le chemin de la page est `/new-api-stat/` par défaut (par ex. `https://<votre-domaine>/new-api-stat/`). Faites correspondre `/new-api-stat/` à `frontend/new-api-stat/` et configurez un proxy inverse de `/new-api-stat-api` vers le backend. Pour déployer à la racine ou sous un autre chemin, définissez `VITE_BASE_PATH` avant la compilation (par ex. `VITE_BASE_PATH=/` ou `VITE_BASE_PATH=/stat/`).
 
 ## Configuration
 
 Le backend privilégie les variables d'environnement afin d'éviter de commettre les identifiants de base de données dans Git :
 
+> Remarque : définissez explicitement les variables d'environnement de la base lors du déploiement ; si `DB_URL` n'est pas définie, l'application revient à une connexion PostgreSQL locale. Tous les exemples de ce document (y compris les valeurs d'exemple MySQL du tableau ci-dessous) utilisent MySQL.
+
 | Variable d'environnement | Valeur par défaut | Description |
 | --- | --- | --- |
-| `DB_URL` | `jdbc:postgresql://localhost:5432/new-api` | URL JDBC ; PostgreSQL ou MySQL fonctionnent tous deux (par ex. `jdbc:mysql://host:3306/new_api?...`). Le pilote et le dialecte sont détectés automatiquement à partir de l'URL |
+| `DB_URL` | `jdbc:mysql://db.example.com:3306/new_api?...` | URL JDBC ; PostgreSQL et MySQL fonctionnent tous deux. Le pilote et le dialecte sont détectés automatiquement à partir de l'URL |
 | `DB_USERNAME` | aucune | Nom d'utilisateur de la base de données ; doit être défini explicitement. Un compte en lecture seule est recommandé |
 | `DB_PASSWORD` | aucune | Mot de passe de la base de données ; doit être défini explicitement |
-| `DB_CONNECTION_INIT_SQL` | instruction de fuseau horaire PostgreSQL | SQL d'initialisation exécuté après l'établissement de chaque connexion, utilisé pour unifier le fuseau horaire des statistiques de `created_at` (secondes epoch). Pour MySQL, remplacez-le par un décalage fixe correspondant à `APP_TIME_ZONE`, par ex. `SET time_zone = '+08:00'` |
+| `DB_CONNECTION_INIT_SQL` | `SET time_zone = '+08:00'` | SQL d'initialisation exécuté après l'établissement de chaque connexion pour unifier le fuseau horaire des statistiques de `created_at` (secondes epoch). MySQL nécessite un décalage fixe correspondant à `APP_TIME_ZONE` ; PostgreSQL utilise une syntaxe différente (`SET TIME ZONE '<APP_TIME_ZONE>'`). Définissez-le selon la base utilisée |
 | `SERVER_PORT` | `8082` | Port du serveur |
-| `SERVER_CONTEXT_PATH` | `/newapi-stat-api` | Chemin de contexte du serveur |
+| `SERVER_CONTEXT_PATH` | `/new-api-stat-api` | Chemin de contexte du serveur |
 | `APP_TIME_ZONE` | `Asia/Shanghai` | Fuseau horaire utilisé pour les dates et heures des statistiques |
 | `APP_ANALYTICS_ROLES` | `10,100` | Valeurs de rôle new-api autorisées à accéder aux API de statistiques ; par défaut administrateur/utilisateur racine |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:3001,http://localhost:5173` | Origines frontend autorisées, séparées par des virgules |
@@ -109,19 +111,7 @@ Le backend privilégie les variables d'environnement afin d'éviter de commettre
 | `SESSION_COOKIE_SAME_SITE` | `lax` | Attribut SameSite du cookie de session |
 | `SWAGGER_ENABLED` | `false` | Activation ou non de Swagger/OpenAPI |
 
-Exemple :
-
-```bash
-export DB_URL='jdbc:postgresql://db.example.com:5432/new-api'
-export DB_USERNAME='newapi_stat_readonly'
-export DB_PASSWORD='replace-with-a-secret'
-export APP_TIME_ZONE='Asia/Shanghai'
-export CORS_ALLOWED_ORIGINS='https://stat.example.com'
-export SESSION_COOKIE_SECURE='true'
-export SWAGGER_ENABLED='false'
-```
-
-Exemple MySQL (notez que la syntaxe de `DB_CONNECTION_INIT_SQL` diffère de PostgreSQL) :
+Exemple (MySQL) :
 
 ```bash
 export DB_URL='jdbc:mysql://db.example.com:3306/new_api?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true'
@@ -149,27 +139,16 @@ Le Dockerfile actuel est une image d'exécution qui n'inclut pas le processus de
 ```bash
 cd backend
 mvn clean package -DskipTests
-copy target\newapi-stat-api-1.0.0.jar app.jar  # Windows PowerShell peut utiliser Copy-Item
-# Linux/macOS : cp target/newapi-stat-api-1.0.0.jar app.jar
-docker build -t newapi-stat-api .
-docker run --rm -p 8082:8082 \
-  -e DB_URL='jdbc:postgresql://host.docker.internal:5432/new-api' \
-  -e DB_USERNAME='newapi_stat_readonly' \
-  -e DB_PASSWORD='replace-with-a-secret' \
-  --name newapi-stat-api \
-  newapi-stat-api
-```
-
-Exemple MySQL :
-
-```bash
-docker run --rm -p 8082:8082 \
+copy target\new-api-stat-api-1.0.0.jar app.jar  # Windows PowerShell peut utiliser Copy-Item
+# Linux/macOS : cp target/new-api-stat-api-1.0.0.jar app.jar
+docker build -t new-api-stat-api .
+docker run -d --restart unless-stopped -p 8082:8082 \
   -e DB_URL='jdbc:mysql://host.docker.internal:3306/new_api?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true' \
   -e DB_USERNAME='newapi_stat_readonly' \
   -e DB_PASSWORD='replace-with-a-secret' \
   -e DB_CONNECTION_INIT_SQL="SET time_zone = '+08:00'" \
-  --name newapi-stat-api \
-  newapi-stat-api
+  --name new-api-stat-api \
+  new-api-stat-api
 ```
 
 Ne commettez jamais de mots de passe réels, d'adresses IP internes ou de `app.jar`. En production, injectez les identifiants via des Secrets, des variables d'environnement ou la configuration de la plateforme.
@@ -192,11 +171,11 @@ Sous Linux/macOS : `cp .env.example .env`
 docker compose up -d --build
 ```
 
-3. Ouvrez `http://<hôte>:8080/new-api-stat/` (modifiez le port exposé via `WEB_PORT` dans `.env`). nginx fait un proxy inverse de `/newapi-stat-api` vers le conteneur backend : la page et l'API partagent la même origine, aucune configuration CORS supplémentaire n'est nécessaire ; arrêtez avec `docker compose down`.
+3. Ouvrez `http://<hôte>:8080/new-api-stat/` (modifiez le port exposé via `WEB_PORT` dans `.env`). nginx fait un proxy inverse de `/new-api-stat-api` vers le conteneur backend : la page et l'API partagent la même origine, aucune configuration CORS supplémentaire n'est nécessaire ; arrêtez avec `docker compose down`.
 
-- L'exemple par défaut atteint la base new-api sur la machine hôte via `host.docker.internal` (compose ajoute automatiquement le mappage `host-gateway` sous Linux). Si la base s'exécute dans un autre réseau Docker, rattachez cette pile à ce réseau comme indiqué dans les commentaires de `compose.yaml` et remplacez l'hôte de `DB_URL` par le nom du service correspondant.
-- Pour MySQL, décommentez la ligne `DB_CONNECTION_INIT_SQL` dans `compose.yaml` (le fuseau horaire doit correspondre à `APP_TIME_ZONE`).
-- Le frontend utilise par défaut `VITE_BASE_PATH=/new-api-stat/` et `VITE_API_BASE_URL=/newapi-stat-api/api`, conformes aux préfixes `location` de `frontend/nginx.conf` ; pour un autre sous-chemin, modifiez en conséquence à la fois `VITE_BASE_PATH` du compose et `frontend/nginx.conf`.
+- Les exemples utilisent MySQL et atteignent la base new-api sur la machine hôte via `host.docker.internal` (compose ajoute automatiquement le mappage `host-gateway` sous Linux). Si la base s'exécute dans un autre réseau Docker, rattachez cette pile à ce réseau comme indiqué dans les commentaires de `compose.yaml` et remplacez l'hôte de `DB_URL` par le nom du service correspondant.
+- `compose.yaml` fournit par défaut le SQL d'initialisation de connexion pour MySQL (`SET time_zone = '+08:00'`, correspondant au `APP_TIME_ZONE=Asia/Shanghai` par défaut) ; pour ajuster le fuseau horaire ou passer à PostgreSQL, remplacez `DB_CONNECTION_INIT_SQL` dans `.env` (exemple de syntaxe PostgreSQL : `SET TIME ZONE 'Asia/Shanghai'`).
+- Le frontend utilise par défaut `VITE_BASE_PATH=/new-api-stat/` et `VITE_API_BASE_URL=/new-api-stat-api/api`, conformes aux préfixes `location` de `frontend/nginx.conf` ; pour un autre sous-chemin, modifiez en conséquence à la fois `VITE_BASE_PATH` du compose et `frontend/nginx.conf`.
 - Ne placez les identifiants réels que dans `.env` (ignoré par .gitignore) ou dans les Secrets de la plateforme — ne les committez jamais.
 
 ## Notes de sécurité

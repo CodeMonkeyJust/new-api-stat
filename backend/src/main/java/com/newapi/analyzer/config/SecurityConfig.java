@@ -14,7 +14,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         CookieCsrfTokenRepository csrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
-        // 前端 SPA 页面位于 "/"（如 Vite 开发服务器 / 反向代理部署），而后端上下文路径是 /newapi-stat-api。
+        // 前端 SPA 页面位于 "/"（如 Vite 开发服务器 / 反向代理部署），而后端上下文路径是 /new-api-stat-api。
         // 若 Cookie Path 使用上下文路径，浏览器不会把 XSRF-TOKEN 暴露给 document.cookie，axios 将读不到
         // token 而无法附带 X-XSRF-TOKEN 请求头，导致登录等写操作被 CSRF 拦截返回 403。这里显式设为 "/"。
         csrfTokenRepository.setCookiePath("/");

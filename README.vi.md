@@ -44,7 +44,7 @@ frontend/  Frontend Vue
 
 ### 1. Chuẩn bị cơ sở dữ liệu
 
-Dự án đọc trực tiếp các bảng `logs` và `users` của new-api để thống kê chỉ-đọc. Hỗ trợ cả PostgreSQL và MySQL; chuyển đổi qua `DB_URL` (mặc định là PostgreSQL). Trước tiên hãy đảm bảo tài khoản cơ sở dữ liệu có quyền truy vấn chỉ-đọc và kiểm tra tính tương thích của SQL cùng phiên bản các trường trong môi trường thử nghiệm.
+Dự án đọc trực tiếp các bảng `logs` và `users` của new-api để thống kê chỉ-đọc. Hỗ trợ cả PostgreSQL và MySQL; chuyển đổi qua `DB_URL`. Tất cả các ví dụ bên dưới đều dùng MySQL. Trước tiên hãy đảm bảo tài khoản cơ sở dữ liệu có quyền truy vấn chỉ-đọc và kiểm tra tính tương thích của SQL cùng phiên bản các trường trong môi trường thử nghiệm.
 
 `db/MySQL.sql` là tệp tham khảo về cấu trúc bảng của instance MySQL mục tiêu của new-api, dùng để mô tả cấu trúc cơ sở dữ liệu của new-api (dự án này chủ yếu đọc hai bảng `logs` và `users`). Hiện tệp được xác minh theo cấu trúc bảng của new-api **v1.0.0-rc.32**. Tệp này chỉ dành cho việc đọc/tham khảo, không phải tập lệnh migration; không thực thi tệp trên bất kỳ cơ sở dữ liệu nào và không ghi đè lên bảng hiện có.
 
@@ -55,13 +55,13 @@ Yêu cầu: Java 17, Maven 3.9+. Backend dựa trên Spring Boot 3.5 (phiên b�
 ```bash
 cd backend
 mvn clean package -DskipTests
-java -jar target/newapi-stat-api-1.0.0.jar
+java -jar target/new-api-stat-api-1.0.0.jar
 ```
 
-Backend mặc định lắng nghe tại `http://localhost:8082` với đường dẫn ngữ cảnh `/newapi-stat-api`. Bắt buộc đặt `DB_USERNAME` và `DB_PASSWORD` trước lần khởi động đầu tiên; ứng dụng không bao giờ tạo hoặc sửa đổi cấu trúc bảng của new-api. Swagger UI và OpenAPI JSON mặc định bị tắt; để phát triển và gỡ lỗi hãy đặt `SWAGGER_ENABLED=true`. Tài liệu API:
+Backend mặc định lắng nghe tại `http://localhost:8082` với đường dẫn ngữ cảnh `/new-api-stat-api`. Bắt buộc đặt `DB_USERNAME` và `DB_PASSWORD` trước lần khởi động đầu tiên; ứng dụng không bao giờ tạo hoặc sửa đổi cấu trúc bảng của new-api. Swagger UI và OpenAPI JSON mặc định bị tắt; để phát triển và gỡ lỗi hãy đặt `SWAGGER_ENABLED=true`. Tài liệu API:
 
-- Swagger UI: `http://localhost:8082/newapi-stat-api/swagger-ui.html`
-- OpenAPI JSON: `http://localhost:8082/newapi-stat-api/v3/api-docs`
+- Swagger UI: `http://localhost:8082/new-api-stat-api/swagger-ui.html`
+- OpenAPI JSON: `http://localhost:8082/new-api-stat-api/v3/api-docs`
 
 ### 3. Khởi động frontend
 
@@ -88,20 +88,22 @@ Bản dựng production:
 npm run build
 ```
 
-Sản phẩm dựng nằm trong `frontend/dist/` và đường dẫn trang mặc định là `/new-api-stat/` (ví dụ: `https://<tên-miền>/new-api-stat/`). Hãy ánh xạ `/new-api-stat/` tới `frontend/dist/` để lưu trữ và cấu hình reverse proxy `/newapi-stat-api` trỏ về backend. Để triển khai ở đường dẫn gốc hoặc đường dẫn khác, hãy đặt `VITE_BASE_PATH` trước khi dựng (ví dụ: `VITE_BASE_PATH=/` hoặc `VITE_BASE_PATH=/stat/`).
+Sản phẩm dựng nằm trong `frontend/new-api-stat/` và đường dẫn trang mặc định là `/new-api-stat/` (ví dụ: `https://<tên-miền>/new-api-stat/`). Hãy ánh xạ `/new-api-stat/` tới `frontend/new-api-stat/` để lưu trữ và cấu hình reverse proxy `/new-api-stat-api` trỏ về backend. Để triển khai ở đường dẫn gốc hoặc đường dẫn khác, hãy đặt `VITE_BASE_PATH` trước khi dựng (ví dụ: `VITE_BASE_PATH=/` hoặc `VITE_BASE_PATH=/stat/`).
 
 ## Cấu hình
 
 Backend ưu tiên sử dụng biến môi trường để tránh đưa thông tin xác thực cơ sở dữ liệu vào Git:
 
+> Lưu ý: khi triển khai hãy đặt tường minh các biến môi trường cơ sở dữ liệu; nếu không đặt `DB_URL`, ứng dụng sẽ dùng kết nối PostgreSQL cục bộ. Mọi ví dụ trong tài liệu này (kể cả các giá trị mẫu MySQL trong bảng dưới) đều dùng MySQL.
+
 | Biến môi trường | Giá trị mặc định | Mô tả |
 | --- | --- | --- |
-| `DB_URL` | `jdbc:postgresql://localhost:5432/new-api` | Địa chỉ JDBC; dùng được cả PostgreSQL và MySQL (ví dụ: `jdbc:mysql://host:3306/new_api?...`). Driver và dialect được tự động nhận diện theo URL |
+| `DB_URL` | `jdbc:mysql://db.example.com:3306/new_api?...` | Địa chỉ JDBC; dùng được cả PostgreSQL và MySQL. Driver và dialect được tự động nhận diện theo URL |
 | `DB_USERNAME` | không có | Tên người dùng cơ sở dữ liệu; bắt buộc cấu hình tường minh. Nên dùng tài khoản chỉ-đọc |
 | `DB_PASSWORD` | không có | Mật khẩu cơ sở dữ liệu; bắt buộc cấu hình tường minh |
-| `DB_CONNECTION_INIT_SQL` | câu lệnh múi giờ của PostgreSQL | SQL khởi tạo chạy sau khi mỗi kết nối được thiết lập, dùng để thống nhất múi giờ khi thống kê `created_at` (giây epoch). Với MySQL hãy đổi thành độ lệch cố định tương ứng với `APP_TIME_ZONE`, ví dụ: `SET time_zone = '+08:00'` |
+| `DB_CONNECTION_INIT_SQL` | `SET time_zone = '+08:00'` | SQL khởi tạo chạy sau khi mỗi kết nối được thiết lập, dùng để thống nhất múi giờ khi thống kê `created_at` (giây epoch). MySQL yêu cầu độ lệch cố định tương ứng `APP_TIME_ZONE`; PostgreSQL dùng cú pháp khác (`SET TIME ZONE '<APP_TIME_ZONE>'`). Hãy đặt theo cơ sở dữ liệu đang dùng |
 | `SERVER_PORT` | `8082` | Cổng dịch vụ |
-| `SERVER_CONTEXT_PATH` | `/newapi-stat-api` | Đường dẫn ngữ cảnh dịch vụ |
+| `SERVER_CONTEXT_PATH` | `/new-api-stat-api` | Đường dẫn ngữ cảnh dịch vụ |
 | `APP_TIME_ZONE` | `Asia/Shanghai` | Múi giờ dùng cho ngày và giờ thống kê |
 | `APP_ANALYTICS_ROLES` | `10,100` | Giá trị vai trò new-api được phép truy cập API thống kê; mặc định là quản trị viên/người dùng root |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:3001,http://localhost:5173` | Các nguồn frontend được phép, phân tách bằng dấu phẩy |
@@ -109,19 +111,7 @@ Backend ưu tiên sử dụng biến môi trường để tránh đưa thông ti
 | `SESSION_COOKIE_SAME_SITE` | `lax` | Thuộc tính SameSite của Session Cookie |
 | `SWAGGER_ENABLED` | `false` | Có bật Swagger/OpenAPI hay không |
 
-Ví dụ:
-
-```bash
-export DB_URL='jdbc:postgresql://db.example.com:5432/new-api'
-export DB_USERNAME='newapi_stat_readonly'
-export DB_PASSWORD='replace-with-a-secret'
-export APP_TIME_ZONE='Asia/Shanghai'
-export CORS_ALLOWED_ORIGINS='https://stat.example.com'
-export SESSION_COOKIE_SECURE='true'
-export SWAGGER_ENABLED='false'
-```
-
-Ví dụ MySQL (lưu ý cú pháp `DB_CONNECTION_INIT_SQL` khác với PostgreSQL):
+Ví dụ (MySQL):
 
 ```bash
 export DB_URL='jdbc:mysql://db.example.com:3306/new_api?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true'
@@ -149,27 +139,16 @@ Dockerfile hiện tại là image thời gian chạy, không bao gồm quá trì
 ```bash
 cd backend
 mvn clean package -DskipTests
-copy target\newapi-stat-api-1.0.0.jar app.jar  # Windows PowerShell có thể dùng Copy-Item
-# Linux/macOS: cp target/newapi-stat-api-1.0.0.jar app.jar
-docker build -t newapi-stat-api .
-docker run --rm -p 8082:8082 \
-  -e DB_URL='jdbc:postgresql://host.docker.internal:5432/new-api' \
-  -e DB_USERNAME='newapi_stat_readonly' \
-  -e DB_PASSWORD='replace-with-a-secret' \
-  --name newapi-stat-api \
-  newapi-stat-api
-```
-
-Ví dụ MySQL:
-
-```bash
-docker run --rm -p 8082:8082 \
+copy target\new-api-stat-api-1.0.0.jar app.jar  # Windows PowerShell có thể dùng Copy-Item
+# Linux/macOS: cp target/new-api-stat-api-1.0.0.jar app.jar
+docker build -t new-api-stat-api .
+docker run -d --restart unless-stopped -p 8082:8082 \
   -e DB_URL='jdbc:mysql://host.docker.internal:3306/new_api?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true' \
   -e DB_USERNAME='newapi_stat_readonly' \
   -e DB_PASSWORD='replace-with-a-secret' \
   -e DB_CONNECTION_INIT_SQL="SET time_zone = '+08:00'" \
-  --name newapi-stat-api \
-  newapi-stat-api
+  --name new-api-stat-api \
+  new-api-stat-api
 ```
 
 Đừng commit mật khẩu thật, IP nội bộ hoặc `app.jar` vào kho lưu trữ. Trong môi trường production, hãy đưa thông tin xác thực qua Secret, biến môi trường hoặc cấu hình nền tảng.
@@ -192,11 +171,11 @@ Trên Linux/macOS: `cp .env.example .env`
 docker compose up -d --build
 ```
 
-3. Truy cập `http://<máy-chủ>:8080/new-api-stat/` (đổi cổng host qua `WEB_PORT` trong `.env`). nginx reverse proxy `/newapi-stat-api` tới container backend nên trang và API cùng nguồn gốc, không cần cấu hình CORS thêm; dừng bằng `docker compose down`.
+3. Truy cập `http://<máy-chủ>:8080/new-api-stat/` (đổi cổng host qua `WEB_PORT` trong `.env`). nginx reverse proxy `/new-api-stat-api` tới container backend nên trang và API cùng nguồn gốc, không cần cấu hình CORS thêm; dừng bằng `docker compose down`.
 
-- Ví dụ mặc định kết nối tới cơ sở dữ liệu new-api trên máy host qua `host.docker.internal` (compose tự thêm ánh xạ `host-gateway` trên Linux). Nếu cơ sở dữ liệu chạy trong một Docker network khác, hãy nối stack này vào network đó theo chú thích cuối `compose.yaml` và đổi host trong `DB_URL` thành tên service tương ứng.
-- Với MySQL, hãy bỏ ghi chú dòng `DB_CONNECTION_INIT_SQL` trong `compose.yaml` (múi giờ phải khớp `APP_TIME_ZONE`).
-- Frontend mặc định dùng `VITE_BASE_PATH=/new-api-stat/` và `VITE_API_BASE_URL=/newapi-stat-api/api`, tương ứng với tiền tố `location` trong `frontend/nginx.conf`; nếu triển khai ở sub-path khác, hãy sửa đồng bộ `VITE_BASE_PATH` trong compose và `frontend/nginx.conf`.
+- Các ví dụ dùng MySQL và kết nối tới cơ sở dữ liệu new-api trên máy host qua `host.docker.internal` (compose tự thêm ánh xạ `host-gateway` trên Linux). Nếu cơ sở dữ liệu chạy trong một Docker network khác, hãy nối stack này vào network đó theo chú thích cuối `compose.yaml` và đổi host trong `DB_URL` thành tên service tương ứng.
+- `compose.yaml` mặc định cung cấp SQL khởi tạo kết nối cho MySQL (`SET time_zone = '+08:00'`, tương ứng `APP_TIME_ZONE=Asia/Shanghai` mặc định); để đổi múi giờ hoặc chuyển sang PostgreSQL, hãy ghi đè `DB_CONNECTION_INIT_SQL` trong `.env` (ví dụ cú pháp PostgreSQL: `SET TIME ZONE 'Asia/Shanghai'`).
+- Frontend mặc định dùng `VITE_BASE_PATH=/new-api-stat/` và `VITE_API_BASE_URL=/new-api-stat-api/api`, tương ứng với tiền tố `location` trong `frontend/nginx.conf`; nếu triển khai ở sub-path khác, hãy sửa đồng bộ `VITE_BASE_PATH` trong compose và `frontend/nginx.conf`.
 - Chỉ đặt thông tin xác thực thật trong `.env` (bị .gitignore bỏ qua) hoặc Secret của nền tảng — đừng commit chúng.
 
 ## Ghi chú bảo mật

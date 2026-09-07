@@ -14,7 +14,7 @@ RUN mvn -B dependency:go-offline
 COPY src ./src
 # 仅匹配 spring-boot 重打包后的可执行 JAR（*.jar.original 不会被匹配）
 RUN mvn -B -DskipTests package \
-    && cp target/newapi-stat-api-*.jar app.jar
+    && cp target/new-api-stat-api-*.jar app.jar
 
 # ---- 运行阶段：与 backend/Dockerfile 相同的运行时 ----
 FROM eclipse-temurin:17-jre
