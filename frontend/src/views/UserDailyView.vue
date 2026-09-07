@@ -7,6 +7,7 @@
     </template>
     <DateUserSelector
       :loading="loading"
+      date-mode-storage-key="dateMode:userDaily"
       default-date-mode="range"
       @date-change="handleDateChange"
       @date-range-change="handleDateRangeChange"

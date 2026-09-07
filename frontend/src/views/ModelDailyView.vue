@@ -7,6 +7,7 @@
     </template>
     <DateUserSelector
       :loading="loading"
+      date-mode-storage-key="dateMode:modelDaily"
       default-date-mode="single"
       @date-change="handleDateChange"
       @date-range-change="handleDateRangeChange"

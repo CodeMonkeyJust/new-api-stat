@@ -85,6 +85,7 @@ interface Props {
   showUserSelector?: boolean
   loading?: boolean
   defaultDateMode?: 'single' | 'range'
+  dateModeStorageKey?: string
 }
 
 interface Emits {
@@ -104,7 +105,30 @@ const { t } = useI18n({ useScope: 'global' })
 
 const emit = defineEmits<Emits>()
 
-const dateMode = ref<'single' | 'range'>(props.defaultDateMode)
+const readStoredDateMode = (): 'single' | 'range' => {
+  if (!props.dateModeStorageKey) return props.defaultDateMode
+
+  try {
+    const storedMode = localStorage.getItem(props.dateModeStorageKey)
+    return storedMode === 'single' || storedMode === 'range'
+      ? storedMode
+      : props.defaultDateMode
+  } catch {
+    return props.defaultDateMode
+  }
+}
+
+const dateMode = ref<'single' | 'range'>(readStoredDateMode())
+
+const saveDateMode = () => {
+  if (!props.dateModeStorageKey) return
+
+  try {
+    localStorage.setItem(props.dateModeStorageKey, dateMode.value)
+  } catch {
+    // Ignore unavailable storage and keep the selector functional.
+  }
+}
 const selectedDate = ref('')
 const dateRange = ref<[string, string] | null>(null)
 const userMode = ref('all')
@@ -144,6 +168,7 @@ const nextDay = () => {
 const disableFutureDate = (date: Date) => date.getTime() > Date.now()
 
 const handleDateModeChange = () => {
+  saveDateMode()
   if (dateMode.value === 'single') {
     setToday()
   } else {
@@ -206,7 +231,7 @@ const loadUsers = async () => {
 }
 
 onMounted(() => {
-  if (props.defaultDateMode === 'single') {
+  if (dateMode.value === 'single') {
     setToday()
   } else {
     selectRecentDays(7)

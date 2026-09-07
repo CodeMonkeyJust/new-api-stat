@@ -8,6 +8,7 @@
     </template>
     <DateUserSelector
       :loading="loading"
+      date-mode-storage-key="dateMode:myStatistics"
       :show-user-selector="false"
       default-date-mode="range"
       @date-change="handleDateChange"
