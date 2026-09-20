@@ -253,9 +253,15 @@ export interface PersonalStatsResponse {
   displayName: string
   summary: PersonalSummary
   models: PersonalModelItem[]
+  hourly: HourlyItem[]
 }
 
-export const getPersonalStats = (data: { startDate: string; endDate: string }) => {
+export interface PersonalStatsRequest {
+  startDate: string
+  endDate: string
+}
+
+export const getPersonalStats = (data: PersonalStatsRequest) => {
   return request<PersonalStatsResponse>({
     url: '/analyzer/personal/stats',
     method: 'post',

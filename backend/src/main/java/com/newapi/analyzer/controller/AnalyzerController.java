@@ -4,9 +4,11 @@ import com.newapi.analyzer.dto.request.QueryRequest;
 import com.newapi.analyzer.dto.request.PersonalStatsRequest;
 import com.newapi.analyzer.dto.response.*;
 import com.newapi.analyzer.service.AnalyzerService;
+import com.newapi.analyzer.service.ExportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -14,6 +16,7 @@ import jakarta.validation.constraints.NotBlank;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.validation.annotation.Validated;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -23,9 +26,11 @@ import java.util.List;
 public class AnalyzerController {
 
     private final AnalyzerService analyzerService;
+    private final ExportService exportService;
 
-    public AnalyzerController(AnalyzerService analyzerService) {
+    public AnalyzerController(AnalyzerService analyzerService, ExportService exportService) {
         this.analyzerService = analyzerService;
+        this.exportService = exportService;
     }
 
     @PostMapping("/summary")
@@ -106,13 +111,32 @@ public class AnalyzerController {
     }
 
     @PostMapping("/personal/stats")
-    @Operation(summary = "获取个人统计（按模型汇总）")
+    @Operation(summary = "获取个人统计（按模型及时间段汇总）")
     public ApiResponse<PersonalStatsResponse> getPersonalStats(@Valid @RequestBody PersonalStatsRequest request, HttpSession session) {
+        PersonalStatsResponse stats = analyzerService.getPersonalStats(request, getSessionUserId(session));
+        return ApiResponse.success(stats);
+    }
+
+    @PostMapping("/personal/export")
+    @Operation(summary = "导出个人统计")
+    public void exportPersonalStats(@Valid @RequestBody PersonalStatsRequest request,
+                                    @RequestParam String exportType,
+                                    HttpSession session,
+                                    HttpServletResponse response) throws IOException {
+        PersonalStatsResponse stats = analyzerService.getPersonalStats(request, getSessionUserId(session));
+
+        switch (exportType) {
+            case "models" -> exportService.exportPersonalModelsToExcel(response, stats.getModels());
+            case "hourly" -> exportService.exportPersonalHourlyToExcel(response, stats.getHourly());
+            default -> throw new IllegalArgumentException("不支持的导出类型");
+        }
+    }
+
+    private Long getSessionUserId(HttpSession session) {
         Object sessionId = session.getAttribute("id");
         if (!(sessionId instanceof Number)) {
             throw new IllegalArgumentException("登录状态无效，请重新登录");
         }
-        PersonalStatsResponse stats = analyzerService.getPersonalStats(request, ((Number) sessionId).longValue());
-        return ApiResponse.success(stats);
+        return ((Number) sessionId).longValue();
     }
 }

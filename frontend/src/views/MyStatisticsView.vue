@@ -27,7 +27,18 @@
     </div>
     <div ref="chartContainer" class="chart-container" v-loading="loading"></div>
     <div class="table-section">
-      <h3>{{ t('myStats.modelDetails') }}</h3>
+      <div class="table-header">
+        <h3>{{ t('myStats.modelDetails') }}</h3>
+        <el-button
+          type="primary"
+          size="small"
+          :loading="modelsExporting"
+          :disabled="!startDate || !endDate"
+          @click="handleModelsExport"
+        >
+          {{ t('userDaily.export') }}
+        </el-button>
+      </div>
       <el-table :data="models" stripe style="width: 100%" v-loading="loading">
         <el-table-column prop="model" :label="t('metric.model')" min-width="220" show-overflow-tooltip />
         <el-table-column prop="promptTokens" :label="t('metric.inputToken')" width="130" align="right">
@@ -37,6 +48,50 @@
           <template #default="{ row }">{{ formatNumber(row.completionTokens) }}</template>
         </el-table-column>
         <el-table-column prop="totalTokens" :label="t('metric.totalToken')" width="130" align="right">
+          <template #default="{ row }">{{ formatNumber(row.totalTokens) }}</template>
+        </el-table-column>
+        <el-table-column prop="cost" :label="t('metric.costUsd')" width="130" align="right">
+          <template #default="{ row }">{{ '$' + Number(row.cost || 0).toFixed(2) }}</template>
+        </el-table-column>
+        <el-table-column prop="callCount" :label="t('metric.callCount')" width="110" align="right">
+          <template #default="{ row }">{{ row.callCount.toLocaleString() }}</template>
+        </el-table-column>
+      </el-table>
+    </div>
+    <div class="table-section">
+      <div class="table-header">
+        <h3>{{ t('myStats.hourlyDetails') }}</h3>
+        <div class="table-actions">
+          <el-checkbox v-model="hideZeroCallHours">
+            {{ t('myStats.hideZeroCallHours') }}
+          </el-checkbox>
+          <el-button
+            type="primary"
+            size="small"
+            :loading="hourlyExporting"
+            :disabled="!startDate || !endDate"
+            @click="handleHourlyExport"
+          >
+            {{ t('userDaily.export') }}
+          </el-button>
+        </div>
+      </div>
+      <el-table
+        :data="visibleHourlyTableData"
+        stripe
+        border
+        max-height="640"
+        style="width: 100%"
+        v-loading="loading"
+      >
+        <el-table-column prop="hour" :label="t('hourly.hour')" width="110" />
+        <el-table-column prop="promptTokens" :label="t('metric.inputToken')" width="140" align="right">
+          <template #default="{ row }">{{ formatNumber(row.promptTokens) }}</template>
+        </el-table-column>
+        <el-table-column prop="completionTokens" :label="t('metric.outputToken')" width="140" align="right">
+          <template #default="{ row }">{{ formatNumber(row.completionTokens) }}</template>
+        </el-table-column>
+        <el-table-column prop="totalTokens" :label="t('metric.totalToken')" width="140" align="right">
           <template #default="{ row }">{{ formatNumber(row.totalTokens) }}</template>
         </el-table-column>
         <el-table-column prop="cost" :label="t('metric.costUsd')" width="130" align="right">
@@ -58,7 +113,8 @@ import { useI18n } from 'vue-i18n'
 import { useAppLocale } from '@/composables/useAppLocale'
 import { initChart } from '@/utils/chart'
 import { getPersonalStats } from '@/api/analyzer'
-import type { PersonalModelItem } from '@/api/analyzer'
+import { exportPersonalStats } from '@/api/export'
+import type { HourlyItem, PersonalModelItem } from '@/api/analyzer'
 import type { UserDTO } from '@/api/auth'
 import DateUserSelector from '@/components/DateUserSelector.vue'
 
@@ -69,6 +125,10 @@ const loading = ref(false)
 const startDate = ref('')
 const endDate = ref('')
 const models = ref<PersonalModelItem[]>([])
+const hourly = ref<HourlyItem[]>([])
+const hideZeroCallHours = ref(false)
+const modelsExporting = ref(false)
+const hourlyExporting = ref(false)
 const chartContainer = ref<HTMLElement>()
 const hasRendered = ref(false)
 let chartInstance: echarts.ECharts | null = null
@@ -101,6 +161,44 @@ const formatNumber = (num: number): string => {
   return value.toString()
 }
 
+interface HourlyTableItem {
+  hour: string
+  promptTokens: number
+  completionTokens: number
+  totalTokens: number
+  cost: number
+  callCount: number
+}
+
+const hourlyTableData = computed<HourlyTableItem[]>(() => {
+  const rows = Array.from({ length: 24 }, (_, hour) => ({
+    hour: `${hour}:00`,
+    promptTokens: 0,
+    completionTokens: 0,
+    totalTokens: 0,
+    cost: 0,
+    callCount: 0
+  }))
+
+  hourly.value.forEach(item => {
+    if (item.hour < 0 || item.hour > 23) return
+    const row = rows[item.hour]
+    row.promptTokens += Number(item.promptTokens) || 0
+    row.completionTokens += Number(item.completionTokens) || 0
+    row.totalTokens = row.promptTokens + row.completionTokens
+    row.cost += Number(item.cost) || 0
+    row.callCount += Number(item.count) || 0
+  })
+
+  return rows
+})
+
+const visibleHourlyTableData = computed(() =>
+  hideZeroCallHours.value
+    ? hourlyTableData.value.filter(item => item.callCount > 0)
+    : hourlyTableData.value
+)
+
 const summaryCards = computed(() => [
   { label: t('metric.callCount'), value: summary.value.totalCount.toLocaleString(), cost: false },
   { label: t('metric.inputToken'), value: formatNumber(summary.value.promptTokens), cost: false },
@@ -121,6 +219,55 @@ const handleDateRangeChange = (start: string, end: string) => {
   loadData()
 }
 
+const downloadBlob = (blob: Blob, filename: string) => {
+  const url = window.URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  window.URL.revokeObjectURL(url)
+}
+
+const handleModelsExport = async () => {
+  if (!startDate.value || !endDate.value) return
+
+  modelsExporting.value = true
+  try {
+    const response = await exportPersonalStats(
+      { startDate: startDate.value, endDate: endDate.value },
+      'models'
+    )
+    downloadBlob(response.data, `personal-models-${Date.now()}.xlsx`)
+    ElMessage.success(t('msg.exportSuccess'))
+  } catch (error) {
+    console.error('Export personal models error:', error)
+    ElMessage.error(t('msg.exportFailed'))
+  } finally {
+    modelsExporting.value = false
+  }
+}
+
+const handleHourlyExport = async () => {
+  if (!startDate.value || !endDate.value) return
+
+  hourlyExporting.value = true
+  try {
+    const response = await exportPersonalStats(
+      { startDate: startDate.value, endDate: endDate.value },
+      'hourly'
+    )
+    downloadBlob(response.data, `personal-hourly-${Date.now()}.xlsx`)
+    ElMessage.success(t('msg.exportSuccess'))
+  } catch (error) {
+    console.error('Export personal hourly data error:', error)
+    ElMessage.error(t('msg.exportFailed'))
+  } finally {
+    hourlyExporting.value = false
+  }
+}
+
 const loadData = async () => {
   if (!startDate.value || !endDate.value) return
 
@@ -139,6 +286,7 @@ const loadData = async () => {
       totalCost: data.summary?.totalCost ?? 0
     }
     models.value = data.models ?? []
+    hourly.value = data.hourly ?? []
     renderChart()
   } catch (error) {
     console.error('Load personal stats error:', error)
@@ -417,11 +565,26 @@ onUnmounted(() => {
   border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
-.table-section h3 {
-  margin: 0 0 12px 0;
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.table-header h3 {
+  margin: 0;
   font-size: 16px;
   font-weight: 500;
   color: #334155;
+}
+
+.table-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
 }
 
 @media (max-width: 1200px) {
@@ -443,6 +606,16 @@ onUnmounted(() => {
     height: 350px;
     padding: 12px;
     margin-top: 16px;
+  }
+
+  .table-header {
+    flex-wrap: wrap;
+  }
+
+  .table-actions {
+    width: 100%;
+    justify-content: space-between;
+    margin-left: 0;
   }
 }
 </style>

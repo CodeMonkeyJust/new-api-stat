@@ -75,6 +75,7 @@ export default {
   },
   hourly: {
     title: "時間帯統計",
+    hour: "時間",
     userDetailsTitle: "{start}:00 - {end}:00 のユーザー詳細"
   },
   model: {
@@ -82,7 +83,11 @@ export default {
     userDetailsTitle: "{model} のモデルユーザー詳細"
   },
   userDaily: {
-    title: "ユーザー統計"
+    title: "ユーザー統計",
+    hourlyTitle: "{username} · 24時間統計",
+    modelUsageTitle: "{username} · モデル使用統計",
+    export: "エクスポート",
+    hideZeroCallHours: '呼び出しのない時間を非表示'
   },
   userBalance: {
     title: "ユーザー残高一覧",
@@ -102,7 +107,9 @@ export default {
   },
   myStats: {
     title: "マイ統計",
-    modelDetails: "モデル明細"
+    hourlyDetails: "時間帯統計",
+    modelDetails: "モデル明細",
+    hideZeroCallHours: '呼び出しのない時間を非表示'
   },
   userDetails: {
     username: "ユーザー名"
@@ -124,7 +131,9 @@ export default {
     loadFailed: "データの読み込みに失敗しました",
     loadUserDetailsFailed: "ユーザー詳細の読み込みに失敗しました",
     loadUsersFailed: "ユーザー一覧の読み込みに失敗しました",
-    logoutSuccess: "ログアウトしました"
+    logoutSuccess: "ログアウトしました",
+    exportSuccess: "エクスポートしました",
+    exportFailed: "エクスポートに失敗しました"
   },
   server: {
     pleaseLoginFirst: "先にログインしてください",

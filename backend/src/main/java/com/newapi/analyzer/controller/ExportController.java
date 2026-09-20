@@ -26,7 +26,18 @@ public class ExportController {
 
     @PostMapping("/data")
     @Operation(summary = "导出数据")
-    public void exportData(@Valid @RequestBody QueryRequest request, HttpServletResponse response) throws IOException {
+    public void exportData(@Valid @RequestBody QueryRequest request, HttpServletResponse response,
+                           @RequestParam(required = false) String exportType) throws IOException {
+        if ("user-hourly".equals(exportType)) {
+            exportService.exportUserHourlyToExcel(response, analyzerService.getHourly(request));
+            return;
+        }
+
+        if ("user-models".equals(exportType)) {
+            exportService.exportUserModelsToExcel(response, analyzerService.getModelDaily(request));
+            return;
+        }
+
         Object data;
         String rankType = request.getRankType();
 

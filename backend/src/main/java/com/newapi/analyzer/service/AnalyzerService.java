@@ -298,7 +298,6 @@ public class AnalyzerService {
         Long endTime = endOfDayTimestamp(request.getEndDate());
 
         StringBuilder sqlBuilder = new StringBuilder("SELECT " +
-                databaseType.dateExpression() + " as date, " +
                 "model_name as model, " +
                 "SUM(prompt_tokens) as prompt_tokens, " +
                 "SUM(completion_tokens) as completion_tokens, " +
@@ -321,8 +320,8 @@ public class AnalyzerService {
             sqlBuilder.append("AND username = ? ");
         }
 
-        sqlBuilder.append("GROUP BY " + databaseType.dateExpression() + ", model_name " +
-                "ORDER BY date, cost DESC");
+        sqlBuilder.append("GROUP BY model_name " +
+                "ORDER BY cost DESC");
 
         Query query = entityManager.createNativeQuery(sqlBuilder.toString());
         query.setParameter(1, startTime);
@@ -339,16 +338,18 @@ public class AnalyzerService {
 
         List<Object[]> results = getResultList(query);
         List<ModelDailyResponse> responses = new ArrayList<>();
+        String dateRangeLabel = request.getStartDate().equals(request.getEndDate())
+                ? request.getStartDate()
+                : request.getStartDate() + " ~ " + request.getEndDate();
 
         for (Object[] row : results) {
-            String date = (String) row[0];
-            String model = (String) row[1];
-            Long promptTokens = ((Number) row[2]).longValue();
-            Long completionTokens = ((Number) row[3]).longValue();
-            Long totalTokens = ((Number) row[4]).longValue();
-            Double cost = ((Number) row[5]).doubleValue();
-            Long callCount = ((Number) row[6]).longValue();
-            responses.add(new ModelDailyResponse(date, model, promptTokens, completionTokens, totalTokens, cost, callCount));
+            String model = (String) row[0];
+            Long promptTokens = ((Number) row[1]).longValue();
+            Long completionTokens = ((Number) row[2]).longValue();
+            Long totalTokens = ((Number) row[3]).longValue();
+            Double cost = ((Number) row[4]).doubleValue();
+            Long callCount = ((Number) row[5]).longValue();
+            responses.add(new ModelDailyResponse(dateRangeLabel, model, promptTokens, completionTokens, totalTokens, cost, callCount));
         }
 
         return responses;
@@ -462,9 +463,41 @@ public class AnalyzerService {
             totalCost += modelCost;
         }
 
+        String hourlySql = "SELECT " +
+                databaseType.hourExpression() + " as hour, " +
+                "SUM(quota) as quota, " +
+                "SUM(quota) / 500000.0 as cost, " +
+                "COUNT(*) as count, " +
+                "COUNT(DISTINCT username) as users, " +
+                "SUM(prompt_tokens) as prompt_tokens, " +
+                "SUM(completion_tokens) as completion_tokens " +
+                "FROM logs " +
+                "WHERE type = 2 AND created_at >= ? AND created_at < ? " +
+                "AND username = ? " +
+                "GROUP BY " + databaseType.hourExpression() + " " +
+                "ORDER BY hour";
+
+        Query hourlyQuery = entityManager.createNativeQuery(hourlySql);
+        hourlyQuery.setParameter(1, startTime);
+        hourlyQuery.setParameter(2, endTime);
+        hourlyQuery.setParameter(3, username);
+
+        List<HourlyResponse> hourly = new ArrayList<>();
+        for (Object[] row : getResultList(hourlyQuery)) {
+            Integer hour = ((Number) row[0]).intValue();
+            Long quota = ((Number) row[1]).longValue();
+            Double cost = ((Number) row[2]).doubleValue();
+            Long count = ((Number) row[3]).longValue();
+            Long users = ((Number) row[4]).longValue();
+            Long hourlyPromptTokens = ((Number) row[5]).longValue();
+            Long hourlyCompletionTokens = ((Number) row[6]).longValue();
+            hourly.add(new HourlyResponse(hour, quota, cost, count, users,
+                    hourlyPromptTokens, hourlyCompletionTokens));
+        }
+
         PersonalSummaryResponse summary = new PersonalSummaryResponse(
                 totalCount, promptTokens, completionTokens, promptTokens + completionTokens, totalCost);
-        return new PersonalStatsResponse(user.getUsername(), user.getDisplayName(), summary, models);
+        return new PersonalStatsResponse(user.getUsername(), user.getDisplayName(), summary, models, hourly);
     }
 
     private Long convertToTimestamp(String dateStr) {

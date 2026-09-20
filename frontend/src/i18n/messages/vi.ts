@@ -75,6 +75,7 @@ export default {
   },
   hourly: {
     title: "Thống kê theo giờ",
+    hour: "Thời gian",
     userDetailsTitle: "Chi tiết người dùng {start}:00 - {end}:00"
   },
   model: {
@@ -82,7 +83,11 @@ export default {
     userDetailsTitle: "Chi tiết người dùng mô hình {model}"
   },
   userDaily: {
-    title: "Thống kê người dùng"
+    title: "Thống kê người dùng",
+    hourlyTitle: "{username} · Thống kê 24 giờ",
+    modelUsageTitle: "{username} · Thống kê sử dụng mô hình",
+    export: "Xuất",
+    hideZeroCallHours: 'Ẩn giờ không có cuộc gọi'
   },
   userBalance: {
     title: "Bảng số dư người dùng",
@@ -102,7 +107,9 @@ export default {
   },
   myStats: {
     title: "Thống kê của tôi",
-    modelDetails: "Chi tiết mô hình"
+    hourlyDetails: "Thống kê theo giờ",
+    modelDetails: "Chi tiết mô hình",
+    hideZeroCallHours: 'Ẩn giờ không có cuộc gọi'
   },
   userDetails: {
     username: "Người dùng"
@@ -124,7 +131,9 @@ export default {
     loadFailed: "Tải dữ liệu thất bại",
     loadUserDetailsFailed: "Tải chi tiết người dùng thất bại",
     loadUsersFailed: "Tải danh sách người dùng thất bại",
-    logoutSuccess: "Đã đăng xuất"
+    logoutSuccess: "Đã đăng xuất",
+    exportSuccess: "Xuất thành công",
+    exportFailed: "Xuất thất bại"
   },
   server: {
     pleaseLoginFirst: "Vui lòng đăng nhập trước",

@@ -75,6 +75,7 @@ export default {
   },
   hourly: {
     title: 'Hourly Statistics',
+    hour: 'Time',
     userDetailsTitle: 'User details for {start}:00 - {end}:00'
   },
   model: {
@@ -82,7 +83,11 @@ export default {
     userDetailsTitle: 'Model user details for {model}'
   },
   userDaily: {
-    title: 'User Statistics'
+    title: 'User Statistics',
+    hourlyTitle: '{username} · 24-hour Statistics',
+    modelUsageTitle: '{username} · Model Usage',
+    export: "Export",
+    hideZeroCallHours: 'Hide hours with no calls'
   },
   userBalance: {
     title: 'User Balance',
@@ -102,7 +107,9 @@ export default {
   },
   myStats: {
     title: 'My Statistics',
-    modelDetails: 'Model Details'
+    hourlyDetails: "Hourly Statistics",
+    modelDetails: 'Model Details',
+    hideZeroCallHours: 'Hide hours with no calls'
   },
   userDetails: {
     username: 'User'
@@ -124,7 +131,9 @@ export default {
     loadFailed: 'Failed to load data',
     loadUserDetailsFailed: 'Failed to load user details',
     loadUsersFailed: 'Failed to load user list',
-    logoutSuccess: 'Signed out successfully'
+    logoutSuccess: 'Signed out successfully',
+    exportSuccess: "Export successful",
+    exportFailed: "Export failed"
   },
   server: {
     pleaseLoginFirst: 'Please sign in first',

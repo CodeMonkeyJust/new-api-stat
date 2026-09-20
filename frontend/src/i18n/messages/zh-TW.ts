@@ -75,6 +75,7 @@ export default {
   },
   hourly: {
     title: '時段統計',
+    hour: '時間',
     userDetailsTitle: '{start}:00 - {end}:00 人員詳情'
   },
   model: {
@@ -82,7 +83,11 @@ export default {
     userDetailsTitle: '{model} 模型人員詳情'
   },
   userDaily: {
-    title: '人員統計'
+    title: '人員統計',
+    hourlyTitle: '{username} · 24小時統計',
+    modelUsageTitle: '{username} · 模型使用統計',
+    export: "匯出",
+    hideZeroCallHours: '隱藏調用次數為0'
   },
   userBalance: {
     title: '用戶餘額表',
@@ -102,7 +107,9 @@ export default {
   },
   myStats: {
     title: '個人統計',
-    modelDetails: '模型明細'
+    hourlyDetails: "時段統計",
+    modelDetails: '模型明細',
+    hideZeroCallHours: '隱藏調用次數為0'
   },
   userDetails: {
     username: '人員名稱'
@@ -124,7 +131,9 @@ export default {
     loadFailed: '載入資料失敗',
     loadUserDetailsFailed: '載入人員詳情失敗',
     loadUsersFailed: '載入使用者清單失敗',
-    logoutSuccess: '已退出登入'
+    logoutSuccess: '已退出登入',
+    exportSuccess: "匯出成功",
+    exportFailed: "匯出失敗"
   },
   server: {
     pleaseLoginFirst: '請先登入',

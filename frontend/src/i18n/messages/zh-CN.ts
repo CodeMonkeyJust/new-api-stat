@@ -75,6 +75,7 @@ export default {
   },
   hourly: {
     title: '时段统计',
+    hour: '时间',
     userDetailsTitle: '{start}:00 - {end}:00 人员详情'
   },
   model: {
@@ -82,7 +83,11 @@ export default {
     userDetailsTitle: '{model} 模型人员详情'
   },
   userDaily: {
-    title: '人员统计'
+    title: '人员统计',
+    hourlyTitle: '{username} · 24小时统计',
+    modelUsageTitle: '{username} · 模型使用统计',
+    export: "导出",
+    hideZeroCallHours: '隐藏调用次数为0'
   },
   userBalance: {
     title: '用户余额表',
@@ -102,7 +107,9 @@ export default {
   },
   myStats: {
     title: '个人统计',
-    modelDetails: '模型明细'
+    hourlyDetails: "时间段统计",
+    modelDetails: '模型明细',
+    hideZeroCallHours: '隐藏调用次数为0'
   },
   userDetails: {
     username: '人员名称'
@@ -124,7 +131,9 @@ export default {
     loadFailed: '加载数据失败',
     loadUserDetailsFailed: '加载人员详情失败',
     loadUsersFailed: '加载用户列表失败',
-    logoutSuccess: '已退出登录'
+    logoutSuccess: '已退出登录',
+    exportSuccess: "导出成功",
+    exportFailed: "导出失败"
   },
   server: {
     pleaseLoginFirst: '请先登录',

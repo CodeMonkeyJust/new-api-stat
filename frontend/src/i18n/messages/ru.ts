@@ -75,6 +75,7 @@ export default {
   },
   hourly: {
     title: "Почасовая статистика",
+    hour: "Время",
     userDetailsTitle: "Детали пользователей за {start}:00 - {end}:00"
   },
   model: {
@@ -82,7 +83,11 @@ export default {
     userDetailsTitle: "Детали пользователей модели {model}"
   },
   userDaily: {
-    title: "Статистика пользователей"
+    title: "Статистика пользователей",
+    hourlyTitle: "{username} · Статистика за 24 часа",
+    modelUsageTitle: "{username} · Использование моделей",
+    export: "Экспорт",
+    hideZeroCallHours: 'Скрыть часы без вызовов'
   },
   userBalance: {
     title: "Балансы пользователей",
@@ -102,7 +107,9 @@ export default {
   },
   myStats: {
     title: "Моя статистика",
-    modelDetails: "Детализация по моделям"
+    hourlyDetails: "Почасовая статистика",
+    modelDetails: "Детализация по моделям",
+    hideZeroCallHours: 'Скрыть часы без вызовов'
   },
   userDetails: {
     username: "Пользователь"
@@ -124,7 +131,9 @@ export default {
     loadFailed: "Не удалось загрузить данные",
     loadUserDetailsFailed: "Не удалось загрузить детали пользователей",
     loadUsersFailed: "Не удалось загрузить список пользователей",
-    logoutSuccess: "Вы вышли из системы"
+    logoutSuccess: "Вы вышли из системы",
+    exportSuccess: "Экспорт выполнен",
+    exportFailed: "Не удалось экспортировать"
   },
   server: {
     pleaseLoginFirst: "Сначала войдите в систему",

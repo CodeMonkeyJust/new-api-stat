@@ -75,6 +75,7 @@ export default {
   },
   hourly: {
     title: "Statistiques horaires",
+    hour: "Heure",
     userDetailsTitle: "Détails des utilisateurs de {start}:00 à {end}:00"
   },
   model: {
@@ -82,7 +83,11 @@ export default {
     userDetailsTitle: "Détails des utilisateurs du modèle {model}"
   },
   userDaily: {
-    title: "Statistiques utilisateurs"
+    title: "Statistiques utilisateurs",
+    hourlyTitle: "{username} · Statistiques sur 24 heures",
+    modelUsageTitle: "{username} · Utilisation des modèles",
+    export: "Exporter",
+    hideZeroCallHours: 'Masquer les heures sans appel'
   },
   userBalance: {
     title: "Soldes utilisateurs",
@@ -102,7 +107,9 @@ export default {
   },
   myStats: {
     title: "Mes statistiques",
-    modelDetails: "Détails des modèles"
+    hourlyDetails: "Statistiques horaires",
+    modelDetails: "Détails des modèles",
+    hideZeroCallHours: 'Masquer les heures sans appel'
   },
   userDetails: {
     username: "Utilisateur"
@@ -124,7 +131,9 @@ export default {
     loadFailed: "Échec du chargement des données",
     loadUserDetailsFailed: "Échec du chargement des détails des utilisateurs",
     loadUsersFailed: "Échec du chargement de la liste des utilisateurs",
-    logoutSuccess: "Vous êtes déconnecté"
+    logoutSuccess: "Vous êtes déconnecté",
+    exportSuccess: "Export réussi",
+    exportFailed: "Échec de l’export"
   },
   server: {
     pleaseLoginFirst: "Veuillez d'abord vous connecter",

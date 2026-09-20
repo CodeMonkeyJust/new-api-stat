@@ -14,4 +14,5 @@ public class PersonalStatsResponse {
     private String displayName;
     private PersonalSummaryResponse summary;
     private List<PersonalModelResponse> models;
+    private List<HourlyResponse> hourly;
 }
