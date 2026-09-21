@@ -13,6 +13,7 @@ export default {
     hourly: '时段统计',
     userDaily: '人员统计',
     userBalance: '用户余额',
+    tokenSecurity: '令牌安全',
     logout: '退出登录'
   },
   header: {
@@ -104,6 +105,82 @@ export default {
     status: '状态',
     normal: '正常',
     disabled: '禁用'
+  },
+  tokenSecurity: {
+    title: '令牌来源与泄露预警',
+    refresh: '刷新',
+    generatedAt: '生成于 {time}',
+    disclaimer: '以下为基于 logs.ip 与每分钟请求频率的启发式风险信号，不能单独证明令牌泄露；NAT、代理、移动网络和主动共享均可能造成误报。',
+    tableTitle: '风险明细（{count}）',
+    onlyRisky: '仅显示风险项',
+    token: '令牌',
+    unnamedToken: '未命名令牌',
+    noTokenId: '无 token_id，按用户与令牌名归并',
+    username: '用户',
+    callCount: '调用次数',
+    ipCount: 'IP 数',
+    networkCount: '网段数',
+    sharedWindows: '5 分钟并发窗口',
+    newIpCount: '新 IP 数',
+    minuteDetails: '每分钟请求统计',
+    minuteDetailsHint: '仅列出请求量最高的 {count} 分钟及对应请求数',
+    peakRpm: '峰值请求/分钟',
+    peakMinute: '峰值时间',
+    activeMinutes: '活跃分钟数',
+    averageRpm: '活跃分钟均值',
+    minute: '分钟',
+    requests: '请求数',
+    noMinuteData: '无每分钟数据',
+    minuteRequestCount: '{count} 次',
+    riskScore: '风险评分',
+    reasons: '风险信号',
+    noRisk: '未发现明显信号',
+    ipDetails: 'IP 来源明细',
+    ipDetailsTruncated: '仅展示调用次数最多的 {count} 个 IP',
+    ipCoverage: {
+      noLogsTitle: '所选周期没有消费日志',
+      noLogsDescription: '所选时间范围内没有消费调用记录。',
+      unavailableTitle: '未采集到 IP，来源风险分析不可用',
+      unavailableDescription: '共 {total} 次调用，其中 {empty} 次未记录有效 IP，IP 来源风险无法评分；每分钟请求统计仍可正常使用。请在 new-api 的“个人设置 → 通知设置”中为相关用户启用“记录 IP 地址”；历史日志无法补录。',
+      partialTitle: 'IP 数据不完整，分析结果可能遗漏风险',
+      partialDescription: '共 {total} 次调用，其中 {empty} 次未记录有效 IP，当前覆盖率为 {percent}。缺失 IP 的调用不会参与来源风险评分。'
+    },
+    summary: {
+      analyzedTokens: '分析令牌数',
+      riskyTokens: '风险令牌数',
+      highRiskTokens: '高风险令牌数',
+      calls: '调用总数',
+      distinctIps: '独立 IP 数'
+    },
+    ip: {
+      ip: 'IP 地址',
+      type: '来源类型',
+      network: '网段',
+      firstSeen: '首次出现',
+      lastSeen: '最后出现',
+      new: '新 IP'
+    },
+    ipType: {
+      PUBLIC: '公网',
+      PRIVATE: '内网',
+      LOOPBACK: '回环',
+      LINK_LOCAL: '链路本地',
+      UNKNOWN: '未知'
+    },
+    risk: {
+      NONE: '正常',
+      LOW: '低',
+      MEDIUM: '中',
+      HIGH: '高'
+    },
+    reason: {
+      CONCURRENT_MULTI_IP: '5 分钟内多 IP 并发',
+      MULTIPLE_NETWORKS: '跨多个网段',
+      NEW_IP_ACTIVITY: '相较上一周期出现新 IP',
+      MANY_IPS: 'IP 数量异常',
+      MIXED_NETWORK_SCOPE: '公网与内网混合',
+      HIGH_RPM: '单令牌每分钟请求数达到 35 次及以上'
+    }
   },
   myStats: {
     title: '个人统计',

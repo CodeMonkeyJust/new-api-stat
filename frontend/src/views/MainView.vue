@@ -66,6 +66,10 @@
               <el-icon class="menu-icon"><Wallet /></el-icon>
               <span class="menu-text">{{ t('menu.userBalance') }}</span>
             </el-menu-item>
+            <el-menu-item index="/token-security" class="menu-item">
+              <el-icon class="menu-icon"><Key /></el-icon>
+              <span class="menu-text">{{ t('menu.tokenSecurity') }}</span>
+            </el-menu-item>
             </template>
           </el-menu>
         </el-aside>
@@ -81,7 +85,7 @@
 import { ref, watch, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { DataAnalysis, Document, Clock, TrendCharts, User, Wallet, Odometer, ArrowDown, SwitchButton } from '@element-plus/icons-vue'
+import { DataAnalysis, Document, Clock, TrendCharts, User, Wallet, Odometer, ArrowDown, SwitchButton, Key } from '@element-plus/icons-vue'
 import { getCurrentUser, logout } from '@/api/auth'
 import { useI18n } from 'vue-i18n'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'

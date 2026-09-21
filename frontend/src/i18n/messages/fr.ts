@@ -13,6 +13,7 @@ export default {
     hourly: "Statistiques horaires",
     userDaily: "Statistiques utilisateurs",
     userBalance: "Solde utilisateur",
+    tokenSecurity: 'Sécurité des jetons',
     logout: "Se déconnecter"
   },
   header: {

@@ -2,9 +2,11 @@ package com.newapi.analyzer.controller;
 
 import com.newapi.analyzer.dto.request.QueryRequest;
 import com.newapi.analyzer.dto.request.PersonalStatsRequest;
+import com.newapi.analyzer.dto.request.TokenSecurityRequest;
 import com.newapi.analyzer.dto.response.*;
 import com.newapi.analyzer.service.AnalyzerService;
 import com.newapi.analyzer.service.ExportService;
+import com.newapi.analyzer.service.TokenSecurityService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -14,6 +16,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.lang.NonNull;
 import org.springframework.validation.annotation.Validated;
 
 import java.io.IOException;
@@ -27,10 +30,13 @@ public class AnalyzerController {
 
     private final AnalyzerService analyzerService;
     private final ExportService exportService;
+    private final TokenSecurityService tokenSecurityService;
 
-    public AnalyzerController(AnalyzerService analyzerService, ExportService exportService) {
+    public AnalyzerController(AnalyzerService analyzerService, ExportService exportService,
+                              TokenSecurityService tokenSecurityService) {
         this.analyzerService = analyzerService;
         this.exportService = exportService;
+        this.tokenSecurityService = tokenSecurityService;
     }
 
     @PostMapping("/summary")
@@ -80,6 +86,14 @@ public class AnalyzerController {
     public ApiResponse<List<ModelUserResponse>> getModelUsers(@Valid @RequestBody QueryRequest request, @RequestParam @NotBlank String model) {
         List<ModelUserResponse> modelUsers = analyzerService.getModelUsers(request, model);
         return ApiResponse.success(modelUsers);
+    }
+
+
+    @PostMapping("/token-security")
+    @Operation(summary = "获取令牌来源与泄露风险分析")
+    public ApiResponse<TokenSecurityResponse> getTokenSecurity(@Valid @RequestBody TokenSecurityRequest request) {
+        TokenSecurityResponse response = tokenSecurityService.analyze(request);
+        return ApiResponse.success(response);
     }
 
     @GetMapping("/user-balances")
@@ -132,6 +146,7 @@ public class AnalyzerController {
         }
     }
 
+    @NonNull
     private Long getSessionUserId(HttpSession session) {
         Object sessionId = session.getAttribute("id");
         if (!(sessionId instanceof Number)) {

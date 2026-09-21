@@ -105,6 +105,82 @@ export default {
     normal: '正常',
     disabled: '停用'
   },
+  tokenSecurity: {
+    title: '權杖來源與洩漏預警',
+    refresh: '重新整理',
+    generatedAt: '產生於 {time}',
+    disclaimer: '以下為基於 logs.ip 與每分鐘請求頻率的啟發式風險訊號，不能單獨證明權杖洩漏；NAT、代理、行動網路和主動共享均可能造成誤報。',
+    tableTitle: '風險明細（{count}）',
+    onlyRisky: '僅顯示風險項目',
+    token: '權杖',
+    unnamedToken: '未命名權杖',
+    noTokenId: '無 token_id，依使用者與權杖名稱合併',
+    username: '使用者',
+    callCount: '呼叫次數',
+    ipCount: 'IP 數',
+    networkCount: '網段數',
+    sharedWindows: '5 分鐘並行視窗',
+    newIpCount: '新 IP 數',
+    minuteDetails: '每分鐘請求統計',
+    minuteDetailsHint: '僅列出請求量最高的 {count} 分鐘及對應請求數',
+    peakRpm: '峰值請求/分鐘',
+    peakMinute: '峰值時間',
+    activeMinutes: '活躍分鐘數',
+    averageRpm: '活躍分鐘均值',
+    minute: '分鐘',
+    requests: '請求數',
+    noMinuteData: '無每分鐘資料',
+    minuteRequestCount: '{count} 次',
+    riskScore: '風險評分',
+    reasons: '風險訊號',
+    noRisk: '未發現明顯訊號',
+    ipDetails: 'IP 來源明細',
+    ipDetailsTruncated: '僅顯示呼叫次數最多的 {count} 個 IP',
+    ipCoverage: {
+      noLogsTitle: '所選週期沒有消費日誌',
+      noLogsDescription: '所選時間範圍內沒有消費呼叫記錄。',
+      unavailableTitle: '未採集到 IP，來源風險分析不可用',
+      unavailableDescription: '共 {total} 次呼叫，其中 {empty} 次未記錄有效 IP，無法進行 IP 來源風險評分；每分鐘請求統計仍可正常使用。請在 new-api 的「個人設定 → 通知設定」中為相關使用者啟用「記錄 IP 位址」；歷史日誌無法補登。',
+      partialTitle: 'IP 資料不完整，分析結果可能遺漏風險',
+      partialDescription: '共 {total} 次呼叫，其中 {empty} 次未記錄有效 IP，目前覆蓋率為 {percent}。缺少 IP 的呼叫不會參與來源風險評分。'
+    },
+    summary: {
+      analyzedTokens: '分析權杖數',
+      riskyTokens: '風險權杖數',
+      highRiskTokens: '高風險權杖數',
+      calls: '呼叫總數',
+      distinctIps: '獨立 IP 數'
+    },
+    ip: {
+      ip: 'IP 位址',
+      type: '來源類型',
+      network: '網段',
+      firstSeen: '首次出現',
+      lastSeen: '最後出現',
+      new: '新 IP'
+    },
+    ipType: {
+      PUBLIC: '公網',
+      PRIVATE: '內網',
+      LOOPBACK: '回送',
+      LINK_LOCAL: '連結本機',
+      UNKNOWN: '未知'
+    },
+    risk: {
+      NONE: '正常',
+      LOW: '低',
+      MEDIUM: '中',
+      HIGH: '高'
+    },
+    reason: {
+      CONCURRENT_MULTI_IP: '5 分鐘內多 IP 並行',
+      MULTIPLE_NETWORKS: '跨多個網段',
+      NEW_IP_ACTIVITY: '相較上一週期出現新 IP',
+      MANY_IPS: 'IP 數量異常',
+      MIXED_NETWORK_SCOPE: '公網與內網混合',
+      HIGH_RPM: '單一權杖每分鐘請求數達到 35 次以上'
+    }
+  },
   myStats: {
     title: '個人統計',
     hourlyDetails: "時段統計",

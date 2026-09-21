@@ -24,6 +24,7 @@ Outil d'analyse statistique de la consommation de jetons (Token) et des appels p
 - Statistiques par utilisateur, modèle et groupe : consommation de jetons, nombre d'appels et coût
 - Tendance quotidienne, répartition sur 24 heures, détails quotidiens par modèle et par utilisateur
 - Consultation du solde des utilisateurs
+- Analyse des IP sources et du risque de fuite de jetons : regroupe les IP/réseaux par jeton, détecte les activités multi-IP sous 5 minutes et les nouvelles IP par rapport à la période précédente, puis calcule un score de risque explicable (simple signal d’investigation)
 - API d'export Excel (`.xlsx`) des statistiques côté backend (l'entrée côté frontend sera complétée dans une prochaine version)
 - Prise en charge des bases PostgreSQL et MySQL (bascule via `DB_URL`, voir la section configuration)
 
@@ -181,6 +182,7 @@ docker compose up -d --build
 ## Notes de sécurité
 
 - Un compte de base de données en lecture seule est recommandé.
+- L’analyse de sécurité des jetons dépend de `logs.ip`. Si la page ne signale aucune donnée IP, activez « Record IP Address » pour les utilisateurs concernés dans new-api, sous Profil → Paramètres de notification. Ce paramètre est désactivé par défaut et les journaux historiques ne peuvent pas être complétés. Pour un déploiement derrière un proxy inverse, configurez aussi correctement `TRUSTED_PROXIES` et `X-Forwarded-For` dans new-api.
 - CORS n'autorise par défaut que les adresses de développement locales ; en production, définissez le domaine réel du frontend.
 - Les points de terminaison de statistiques reposent sur la connexion par session ; par défaut, seuls les rôles administrateur/racine de new-api peuvent accéder aux statistiques, au solde, à la liste des utilisateurs, à l'export et à l'état de la base de données. Le backend active un jeton CSRF basé sur un cookie ; utilisez HTTPS et limitez les sources d'accès au niveau du proxy inverse.
 - Les plages de dates de requête sont limitées à 366 jours au maximum et à 100 utilisateurs par requête ; l'export suit les mêmes limites.

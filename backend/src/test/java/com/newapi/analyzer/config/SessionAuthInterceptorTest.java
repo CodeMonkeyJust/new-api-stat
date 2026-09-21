@@ -42,6 +42,7 @@ class SessionAuthInterceptorTest {
         return request;
     }
 
+    @NonNull
     private MockHttpSession sessionWithUserId(Long userId) {
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("id", userId);

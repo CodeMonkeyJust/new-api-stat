@@ -24,6 +24,7 @@ A Token consumption and call statistics tool for [new-api](https://github.com/Ca
 - Statistics by user, model and group for Token usage, call counts and cost
 - Daily trend, 24-hour distribution, per-model daily details and per-user daily details
 - User balance lookup
+- Call-source IP and token-leak risk analysis: aggregates IPs/networks per token, detects multi-IP activity within 5 minutes and new IPs versus the previous period, and assigns an explainable risk score (investigation signal only); it also reports peak requests per minute, active minutes and busiest minutes
 - Backend Excel (`.xlsx`) export API for statistics (the frontend entry will be completed in a later release)
 - Supports PostgreSQL and MySQL databases (switch via `DB_URL`, see the configuration section)
 
@@ -181,6 +182,7 @@ docker compose up -d --build
 ## Security Notes
 
 - A read-only database account is recommended.
+- The IP-source signals in token-security analysis depend on `logs.ip`; per-minute request analysis depends only on consumption logs and call timestamps. If the page reports no IP data, enable "Record IP Address" for the affected users in new-api under Profile → Notification Settings. This setting is disabled by default, and historical logs cannot be backfilled. For reverse-proxy deployments, also configure new-api `TRUSTED_PROXIES` and `X-Forwarded-For` correctly.
 - CORS allows only local development addresses by default; set the real frontend domain in production.
 - Statistics endpoints rely on session login; by default only new-api administrator/root roles can access statistics, balance, user list, export and database-status endpoints. The backend enables a cookie-based CSRF token; use HTTPS and restrict access sources at the reverse-proxy layer.
 - Query date ranges are limited to at most 366 days and 100 users per query; export follows the same query limits.

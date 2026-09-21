@@ -13,6 +13,7 @@ export default {
     hourly: "Почасовая статистика",
     userDaily: "Статистика пользователей",
     userBalance: "Баланс пользователей",
+    tokenSecurity: 'Безопасность токенов',
     logout: "Выйти"
   },
   header: {

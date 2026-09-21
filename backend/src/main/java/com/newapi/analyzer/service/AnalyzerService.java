@@ -8,6 +8,7 @@ import com.newapi.analyzer.entity.UserEntity;
 import com.newapi.analyzer.repository.UserRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -416,7 +417,7 @@ public class AnalyzerService {
         return responses;
     }
 
-    public PersonalStatsResponse getPersonalStats(PersonalStatsRequest request, Long userId) {
+    public PersonalStatsResponse getPersonalStats(PersonalStatsRequest request, @NonNull Long userId) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("当前登录用户不存在"));
         String username = user.getUsername();

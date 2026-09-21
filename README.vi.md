@@ -24,6 +24,7 @@ Công cụ phân tích thống kê mức tiêu thụ Token và số lần gọi 
 - Thống kê theo người dùng, mô hình và nhóm về mức tiêu thụ Token, số lần gọi và chi phí
 - Xu hướng theo ngày, phân bố 24 giờ, chi tiết hằng ngày theo mô hình và theo người dùng
 - Tra cứu số dư người dùng
+- Phân tích IP nguồn gọi và nguy cơ rò rỉ token: tổng hợp IP/network theo token, phát hiện hoạt động từ nhiều IP trong 5 phút và IP mới so với kỳ trước, đồng thời đưa ra điểm rủi ro có thể giải thích (chỉ là dấu hiệu để điều tra)
 - API xuất kết quả thống kê ra Excel (`.xlsx`) ở backend (lối vào trên frontend sẽ được hoàn thiện ở phiên bản sau)
 - Hỗ trợ cơ sở dữ liệu PostgreSQL và MySQL (chuyển đổi qua `DB_URL`, xem phần cấu hình)
 
@@ -181,6 +182,7 @@ docker compose up -d --build
 ## Ghi chú bảo mật
 
 - Nên dùng tài khoản cơ sở dữ liệu chỉ-đọc.
+- Phân tích bảo mật token phụ thuộc vào `logs.ip`. Nếu trang báo không có dữ liệu IP, hãy bật “Record IP Address” cho người dùng liên quan trong new-api tại Hồ sơ → Cài đặt thông báo. Tùy chọn này mặc định bị tắt và nhật ký cũ không thể ghi bù. Khi triển khai sau reverse proxy, cũng cần cấu hình đúng `TRUSTED_PROXIES` và `X-Forwarded-For` của new-api.
 - CORS mặc định chỉ cho phép địa chỉ phát triển cục bộ; trong production phải đặt tên miền frontend thực tế.
 - Các endpoint thống kê phụ thuộc vào đăng nhập Session; theo mặc định chỉ vai trò quản trị viên/root của new-api truy cập được thống kê, số dư, danh sách người dùng, xuất dữ liệu và trạng thái cơ sở dữ liệu. Backend bật CSRF Token dựa trên Cookie; hãy dùng HTTPS và giới hạn nguồn truy cập ở lớp reverse proxy.
 - Phạm vi ngày truy vấn tối đa 366 ngày, mỗi lần tối đa 100 người dùng; xuất dữ liệu cũng chịu cùng giới hạn truy vấn.

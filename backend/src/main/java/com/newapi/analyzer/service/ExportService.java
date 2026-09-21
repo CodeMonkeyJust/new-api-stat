@@ -120,21 +120,6 @@ public class ExportService {
         }
     }
 
-    private Object[] extractValues(Object item, String rankType) {
-        if (item == null) {
-            return new Object[0];
-        }
-
-        switch (rankType) {
-            case "daily":
-                return extractDailyValues(item);
-            case "hourly":
-                return extractHourlyValues(item);
-            default:
-                return extractRankValues(item);
-        }
-    }
-
     private Object[] extractRankValues(Object item) {
         try {
             java.lang.reflect.Field[] fields = item.getClass().getDeclaredFields();

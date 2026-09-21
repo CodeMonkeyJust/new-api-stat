@@ -13,6 +13,73 @@ export interface QueryRequest {
   usernames?: string[]
 }
 
+export interface TokenSecurityRequest {
+  startDate: string
+  endDate: string
+  usernames?: string[]
+  topN: number
+}
+
+export interface TokenIpItem {
+  ip: string
+  ipType: string
+  network: string
+  callCount: number
+  totalTokens: number
+  cost: number
+  firstSeen: number
+  lastSeen: number
+  newIp: boolean
+}
+
+export interface TokenMinuteItem {
+  minuteStart: number
+  requestCount: number
+}
+
+export interface TokenRiskItem {
+  tokenId: number | null
+  tokenName: string
+  username: string
+  callCount: number
+  promptTokens: number
+  completionTokens: number
+  totalTokens: number
+  cost: number
+  distinctIpCount: number
+  distinctNetworkCount: number
+  sharedFiveMinuteWindows: number
+  newIpCount: number
+  peakRequestsPerMinute: number
+  peakMinute: number | null
+  activeMinuteCount: number
+  averageRequestsPerMinute: number
+  busiestMinutes: TokenMinuteItem[]
+  riskScore: number
+  riskLevel: 'NONE' | 'LOW' | 'MEDIUM' | 'HIGH'
+  riskReasons: string[]
+  ips: TokenIpItem[]
+  ipDetailsTruncated: boolean
+}
+
+export interface TokenSecuritySummary {
+  analyzedTokenCount: number
+  riskyTokenCount: number
+  highRiskTokenCount: number
+  callCount: number
+  distinctIpCount: number
+  totalLogCount: number
+  emptyIpLogCount: number
+  ipCoveragePercent: number
+  ipDataAvailable: boolean
+}
+
+export interface TokenSecurityResponse {
+  summary: TokenSecuritySummary
+  tokens: TokenRiskItem[]
+  generatedAt: number
+}
+
 export interface SummaryResponse {
   totalCount: number
   totalTokens: number
@@ -214,6 +281,14 @@ export const getUserBalances = () => {
   return request<UserBalanceResponse>({
     url: '/analyzer/user-balances',
     method: 'get'
+  })
+}
+
+export const getTokenSecurity = (params: TokenSecurityRequest) => {
+  return request<TokenSecurityResponse>({
+    url: '/analyzer/token-security',
+    method: 'post',
+    data: params
   })
 }
 

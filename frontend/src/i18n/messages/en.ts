@@ -13,6 +13,7 @@ export default {
     hourly: 'Hourly Statistics',
     userDaily: 'User Statistics',
     userBalance: 'User Balance',
+    tokenSecurity: 'Token Security',
     logout: 'Sign Out'
   },
   header: {
@@ -104,6 +105,82 @@ export default {
     status: 'Status',
     normal: 'Normal',
     disabled: 'Disabled'
+  },
+  tokenSecurity: {
+    title: 'Token Source & Leak Signals',
+    refresh: 'Refresh',
+    generatedAt: 'Generated at {time}',
+    disclaimer: 'These are heuristic risk signals based on logs.ip and per-minute request rates and cannot prove token leakage. NAT, proxies, mobile networks, and intentional sharing can cause false positives.',
+    tableTitle: 'Risk Details ({count})',
+    onlyRisky: 'Show risky tokens only',
+    token: 'Token',
+    unnamedToken: 'Unnamed token',
+    noTokenId: 'No token_id; grouped by user and token name',
+    username: 'User',
+    callCount: 'Calls',
+    ipCount: 'IPs',
+    networkCount: 'Networks',
+    sharedWindows: '5-min shared windows',
+    newIpCount: 'New IPs',
+    minuteDetails: 'Requests per Minute',
+    minuteDetailsHint: 'Showing the top {count} minutes by requests and their request counts',
+    peakRpm: 'Peak requests/min',
+    peakMinute: 'Peak time',
+    activeMinutes: 'Active minutes',
+    averageRpm: 'Avg per active minute',
+    minute: 'Minute',
+    requests: 'Requests',
+    noMinuteData: 'No per-minute data',
+    minuteRequestCount: '{count} requests',
+    riskScore: 'Risk score',
+    reasons: 'Signals',
+    noRisk: 'No obvious signal',
+    ipDetails: 'IP source details',
+    ipDetailsTruncated: 'Showing the {count} most active IPs only',
+    ipCoverage: {
+      noLogsTitle: 'No consumption logs in the selected period',
+      noLogsDescription: 'There are no consumption calls in the selected date range.',
+      unavailableTitle: 'No IP data collected; IP source-risk analysis is unavailable',
+      unavailableDescription: '{empty} of {total} calls have no usable IP and cannot be scored for IP source risk; per-minute request analysis is still available. Enable "Record IP Address" for the affected users in new-api under Profile → Notification Settings. Historical logs cannot be backfilled.',
+      partialTitle: 'IP coverage is incomplete; some risks may be missed',
+      partialDescription: '{empty} of {total} calls have no usable IP; current coverage is {percent}. Calls without IP data are excluded from source-risk scoring.'
+    },
+    summary: {
+      analyzedTokens: 'Analyzed Tokens',
+      riskyTokens: 'Risky Tokens',
+      highRiskTokens: 'High-risk Tokens',
+      calls: 'Total Calls',
+      distinctIps: 'Distinct IPs'
+    },
+    ip: {
+      ip: 'IP address',
+      type: 'Source type',
+      network: 'Network',
+      firstSeen: 'First seen',
+      lastSeen: 'Last seen',
+      new: 'New IP'
+    },
+    ipType: {
+      PUBLIC: 'Public',
+      PRIVATE: 'Private',
+      LOOPBACK: 'Loopback',
+      LINK_LOCAL: 'Link local',
+      UNKNOWN: 'Unknown'
+    },
+    risk: {
+      NONE: 'Normal',
+      LOW: 'Low',
+      MEDIUM: 'Medium',
+      HIGH: 'High'
+    },
+    reason: {
+      CONCURRENT_MULTI_IP: 'Multi-IP activity within 5 minutes',
+      MULTIPLE_NETWORKS: 'Activity across multiple networks',
+      NEW_IP_ACTIVITY: 'New IP versus previous period',
+      MANY_IPS: 'Unusually high IP count',
+      MIXED_NETWORK_SCOPE: 'Public and private IPs mixed',
+      HIGH_RPM: 'Single-token request rate reached 35 per minute or more'
+    }
   },
   myStats: {
     title: 'My Statistics',

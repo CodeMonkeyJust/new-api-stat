@@ -13,6 +13,7 @@ export default {
     hourly: "Thống kê theo giờ",
     userDaily: "Thống kê người dùng",
     userBalance: "Số dư người dùng",
+    tokenSecurity: 'Bảo mật token',
     logout: "Đăng xuất"
   },
   header: {

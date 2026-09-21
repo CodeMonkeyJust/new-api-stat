@@ -7,6 +7,7 @@ import DailyTrend from '@/views/DailyTrend.vue'
 import HourlyStatistics from '@/views/HourlyStatistics.vue'
 import UserDailyView from '@/views/UserDailyView.vue'
 import UserBalance from '@/views/UserBalance.vue'
+import TokenSecurityView from '@/views/TokenSecurityView.vue'
 import MyStatisticsView from '@/views/MyStatisticsView.vue'
 import { getCurrentUser } from '@/api/auth'
 import type { UserDTO } from '@/api/auth'
@@ -72,6 +73,12 @@ const routes: RouteRecordRaw[] = [
         path: 'user-balance',
         name: 'UserBalance',
         component: UserBalance,
+        meta: { privilegeRequired: true }
+      },
+      {
+        path: 'token-security',
+        name: 'TokenSecurity',
+        component: TokenSecurityView,
         meta: { privilegeRequired: true }
       }
     ]

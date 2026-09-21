@@ -13,6 +13,7 @@ export default {
     hourly: "時間帯統計",
     userDaily: "ユーザー統計",
     userBalance: "ユーザー残高",
+    tokenSecurity: 'トークンセキュリティ',
     logout: "ログアウト"
   },
   header: {
