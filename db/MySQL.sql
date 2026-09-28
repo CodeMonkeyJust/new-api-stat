@@ -294,6 +294,20 @@ CREATE TABLE `models` (
 
 
 -- new_api.`options` definition
+--
+-- options 是键值配置表，常见计费相关 key：
+--   CacheRatio      缓存命中倍率
+--   ModelRatio      模型倍率
+--   CompletionRatio 补全倍率
+--
+-- 导出上述 3 个配置为可执行 UPDATE 语句：
+-- SELECT CONCAT(
+--     'UPDATE `options` SET `value` = ', QUOTE(`value`),
+--     ' WHERE `key` = ', QUOTE(`key`), ';'
+-- ) AS update_sql
+-- FROM `options`
+-- WHERE `key` IN ('CacheRatio', 'ModelRatio', 'CompletionRatio')
+-- ORDER BY FIELD(`key`, 'CacheRatio', 'ModelRatio', 'CompletionRatio');
 
 CREATE TABLE `options` (
   `key` varchar(191) NOT NULL,
